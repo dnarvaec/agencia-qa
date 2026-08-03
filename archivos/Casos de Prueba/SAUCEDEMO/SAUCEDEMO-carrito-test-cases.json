@@ -1,0 +1,241 @@
+{
+  "story_id": "SAUCEDEMO",
+  "story_title": "Automatización funcional SauceDemo — Módulo Carrito",
+  "generated_at": "2026-07-31T19:10:00Z",
+  "environment": {
+    "web": "https://www.saucedemo.com/"
+  },
+  "credentials": {
+    "web": [
+      { "user": "standard_user",          "role": "standard",           "password": "secret_sauce" },
+      { "user": "performance_glitch_user","role": "performance_glitch", "password": "secret_sauce" },
+      { "user": "problem_user",           "role": "problem",            "password": "secret_sauce" },
+      { "user": "error_user",             "role": "error",              "password": "secret_sauce" },
+      { "user": "visual_user",            "role": "visual",             "password": "secret_sauce" },
+      { "user": "locked_out_user",        "role": "locked_out",         "password": "secret_sauce" }
+    ]
+  },
+  "summary": {
+    "total_web": 8,
+    "total_api": 0,
+    "total_manual": 0,
+    "total": 8
+  },
+  "test_cases": [
+    {
+      "id": "TC-022",
+      "type": "web",
+      "title": "Agregar un solo producto al carrito y verificar en la página del carrito",
+      "description": "Valida que al agregar un producto desde el inventario, este aparezca correctamente reflejado en la página del carrito.",
+      "objective": "Confirmar la persistencia del producto agregado al navegar a la vista del carrito",
+      "priority": "alta",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce autenticado",
+        "El carrito está vacío al iniciar el caso"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username con 'standard_user' y Password con 'secret_sauce', luego hacer clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' del producto 'Sauce Labs Backpack'", "data": "N/A", "expected_result": "El contador del carrito muestra '1'" },
+        { "order": 4, "action": "Hacer clic en el ícono del carrito (.shopping_cart_link)", "data": "N/A", "expected_result": "El sistema navega a /cart.html" },
+        { "order": 5, "action": "Verificar la presencia del ítem 'Sauce Labs Backpack' en la lista (.cart_item)", "data": "N/A", "expected_result": "El producto 'Sauce Labs Backpack' está visible en el carrito y el conteo total de ítems es 1" }
+      ],
+      "post_condition": "El carrito contiene 1 producto: Sauce Labs Backpack",
+      "acceptance_criteria_covered": ["AC-CART-01"],
+      "derivation_trace": {
+        "quote": "await header.expectCartCount(scenario.products.length); await header.openCart(); await cartPage.expectItemInCart(product); await cartPage.expectCartCount(scenario.products.length);",
+        "observed_in": "tests/cart/cart.spec.ts — 'Agregar productos al carrito' (escenario: Agregar un solo producto al carrito)"
+      },
+      "automation_notes": "Selectores: .shopping_cart_link, .cart_item. Framework: Playwright + TypeScript. Dato fuente: data/products.json → cartScenarios[0]."
+    },
+    {
+      "id": "TC-023",
+      "type": "web",
+      "title": "Agregar múltiples productos al carrito y verificarlos",
+      "description": "Valida que al agregar tres productos distintos desde el inventario, los tres aparezcan correctamente en la página del carrito.",
+      "objective": "Confirmar que el carrito soporta múltiples productos simultáneamente",
+      "priority": "alta",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce autenticado",
+        "El carrito está vacío al iniciar el caso"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username con 'standard_user' y Password con 'secret_sauce', luego hacer clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' de 'Sauce Labs Backpack', 'Sauce Labs Bike Light' y 'Sauce Labs Bolt T-Shirt' consecutivamente", "data": "productos: [Sauce Labs Backpack, Sauce Labs Bike Light, Sauce Labs Bolt T-Shirt]", "expected_result": "El contador del carrito muestra '3'" },
+        { "order": 4, "action": "Hacer clic en el ícono del carrito", "data": "N/A", "expected_result": "El sistema navega a /cart.html mostrando los 3 productos" },
+        { "order": 5, "action": "Verificar que cada uno de los 3 productos esté presente en la lista del carrito", "data": "N/A", "expected_result": "Los 3 productos son visibles y el conteo total de ítems del carrito es 3" }
+      ],
+      "post_condition": "El carrito contiene 3 productos",
+      "acceptance_criteria_covered": ["AC-CART-01"],
+      "derivation_trace": {
+        "quote": "await header.expectCartCount(scenario.products.length); ...for (const product of scenario.products) { await cartPage.expectItemInCart(product); }",
+        "observed_in": "tests/cart/cart.spec.ts — 'Agregar productos al carrito' (escenario: Agregar múltiples productos al carrito)"
+      },
+      "automation_notes": "Selectores: .shopping_cart_badge, .cart_item. Framework: Playwright + TypeScript. Dato fuente: data/products.json → cartScenarios[1]."
+    },
+    {
+      "id": "TC-024",
+      "type": "web",
+      "title": "Agregar el producto más caro (Sauce Labs Fleece Jacket) al carrito",
+      "description": "Valida el caso límite superior de precio: agregar el producto más caro del catálogo ($49.99) y confirmar su presencia en el carrito.",
+      "objective": "Confirmar el manejo correcto del producto de mayor valor monetario",
+      "priority": "media",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce autenticado",
+        "El carrito está vacío al iniciar el caso"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username con 'standard_user' y Password con 'secret_sauce', luego hacer clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' del producto 'Sauce Labs Fleece Jacket'", "data": "N/A", "expected_result": "El contador del carrito muestra '1'" },
+        { "order": 4, "action": "Hacer clic en el ícono del carrito y verificar el producto en la lista", "data": "N/A", "expected_result": "El producto 'Sauce Labs Fleece Jacket' ($49.99) está visible en el carrito" }
+      ],
+      "post_condition": "El carrito contiene 1 producto: Sauce Labs Fleece Jacket",
+      "acceptance_criteria_covered": ["AC-CART-02"],
+      "derivation_trace": {
+        "quote": "scenario: 'Agregar el producto más caro al carrito', products: ['Sauce Labs Fleece Jacket']",
+        "observed_in": "tests/cart/cart.spec.ts — 'Agregar productos al carrito' (data/products.json → cartScenarios[2])"
+      },
+      "automation_notes": "Framework: Playwright + TypeScript. Precio confirmado en exploración en vivo: $49.99 (el más alto del catálogo)."
+    },
+    {
+      "id": "TC-025",
+      "type": "web",
+      "title": "Agregar el producto más barato (Sauce Labs Onesie) al carrito",
+      "description": "Valida el caso límite inferior de precio: agregar el producto más barato del catálogo ($7.99) y confirmar su presencia en el carrito.",
+      "objective": "Confirmar el manejo correcto del producto de menor valor monetario",
+      "priority": "media",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce autenticado",
+        "El carrito está vacío al iniciar el caso"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username con 'standard_user' y Password con 'secret_sauce', luego hacer clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' del producto 'Sauce Labs Onesie'", "data": "N/A", "expected_result": "El contador del carrito muestra '1'" },
+        { "order": 4, "action": "Hacer clic en el ícono del carrito y verificar el producto en la lista", "data": "N/A", "expected_result": "El producto 'Sauce Labs Onesie' ($7.99) está visible en el carrito" }
+      ],
+      "post_condition": "El carrito contiene 1 producto: Sauce Labs Onesie",
+      "acceptance_criteria_covered": ["AC-CART-02"],
+      "derivation_trace": {
+        "quote": "scenario: 'Agregar el producto más barato al carrito', products: ['Sauce Labs Onesie']",
+        "observed_in": "tests/cart/cart.spec.ts — 'Agregar productos al carrito' (data/products.json → cartScenarios[3])"
+      },
+      "automation_notes": "Framework: Playwright + TypeScript. Precio confirmado en exploración en vivo: $7.99 (el más bajo del catálogo)."
+    },
+    {
+      "id": "TC-026",
+      "type": "web",
+      "title": "Eliminar un producto del carrito",
+      "description": "Valida que un producto pueda eliminarse desde la página del carrito y que este quede vacío correctamente.",
+      "objective": "Confirmar la funcionalidad de eliminación de productos desde el carrito",
+      "priority": "alta",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce autenticado",
+        "El carrito está vacío al iniciar el caso"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username con 'standard_user' y Password con 'secret_sauce', luego hacer clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' del producto 'Sauce Labs Backpack'", "data": "N/A", "expected_result": "El contador del carrito muestra '1'" },
+        { "order": 4, "action": "Hacer clic en el ícono del carrito", "data": "N/A", "expected_result": "El sistema navega a /cart.html mostrando el producto" },
+        { "order": 5, "action": "Hacer clic en el botón 'Remove' ([data-test='remove-sauce-labs-backpack']) del producto en el carrito", "data": "N/A", "expected_result": "El producto desaparece de la lista del carrito (.cart_item con conteo 0) y el contador del header se oculta" }
+      ],
+      "post_condition": "El carrito queda vacío",
+      "acceptance_criteria_covered": ["AC-CART-03"],
+      "derivation_trace": {
+        "quote": "await cartPage.removeItemByName('Sauce Labs Backpack'); await cartPage.expectCartEmpty(); await header.expectCartCount(0);",
+        "observed_in": "tests/cart/cart.spec.ts — 'Eliminar un producto del carrito'"
+      },
+      "automation_notes": "Selector: [data-test='remove-sauce-labs-backpack']. Framework: Playwright + TypeScript."
+    },
+    {
+      "id": "TC-027",
+      "type": "web",
+      "title": "El contador del carrito se actualiza correctamente al agregar y quitar productos",
+      "description": "Valida que el badge del contador del carrito refleje en tiempo real las adiciones y eliminaciones sucesivas de productos.",
+      "objective": "Confirmar la consistencia del contador del carrito ante múltiples operaciones",
+      "priority": "alta",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce autenticado",
+        "El carrito está vacío al iniciar el caso"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username con 'standard_user' y Password con 'secret_sauce', luego hacer clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' de 'Sauce Labs Backpack'", "data": "N/A", "expected_result": "El contador del carrito muestra '1'" },
+        { "order": 4, "action": "Hacer clic en 'Add to cart' de 'Sauce Labs Bike Light'", "data": "N/A", "expected_result": "El contador del carrito muestra '2'" },
+        { "order": 5, "action": "Hacer clic en 'Remove' de 'Sauce Labs Backpack'", "data": "N/A", "expected_result": "El contador del carrito muestra '1'" },
+        { "order": 6, "action": "Hacer clic en 'Remove' de 'Sauce Labs Bike Light'", "data": "N/A", "expected_result": "El contador del carrito desaparece (0 productos)" }
+      ],
+      "post_condition": "El carrito queda vacío",
+      "acceptance_criteria_covered": ["AC-CART-04"],
+      "derivation_trace": {
+        "quote": "await header.expectCartCount(1); ... await header.expectCartCount(2); ... await header.expectCartCount(1); ... await header.expectCartCount(0);",
+        "observed_in": "tests/cart/cart.spec.ts — 'El contador del carrito se actualiza correctamente al agregar y quitar'"
+      },
+      "automation_notes": "Selector: .shopping_cart_badge. Framework: Playwright + TypeScript."
+    },
+    {
+      "id": "TC-028",
+      "type": "web",
+      "title": "Continuar comprando desde el carrito regresa al inventario",
+      "description": "Valida que el botón 'Continue Shopping' en la página del carrito redirija correctamente al inventario de productos.",
+      "objective": "Confirmar la navegación de retorno desde el carrito hacia el catálogo",
+      "priority": "media",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce autenticado",
+        "El carrito contiene al menos 1 producto"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username con 'standard_user' y Password con 'secret_sauce', luego hacer clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' de 'Sauce Labs Onesie'", "data": "N/A", "expected_result": "El contador del carrito muestra '1'" },
+        { "order": 4, "action": "Hacer clic en el ícono del carrito", "data": "N/A", "expected_result": "El sistema navega a /cart.html" },
+        { "order": 5, "action": "Hacer clic en el botón 'Continue Shopping' ([data-test='continue-shopping'])", "data": "N/A", "expected_result": "El sistema navega de regreso a /inventory.html mostrando el título 'Products'" }
+      ],
+      "post_condition": "El usuario se encuentra en /inventory.html con el producto aún en el carrito",
+      "acceptance_criteria_covered": ["AC-CART-05"],
+      "derivation_trace": {
+        "quote": "await cartPage.continueShopping(); await inventoryPage.expectOnInventoryPage();",
+        "observed_in": "tests/cart/cart.spec.ts — 'Continuar comprando desde el carrito regresa al inventario'"
+      },
+      "automation_notes": "Selector: [data-test='continue-shopping']. Framework: Playwright + TypeScript."
+    },
+    {
+      "id": "TC-029",
+      "type": "web",
+      "title": "El precio total en el carrito coincide con el precio del producto agregado",
+      "description": "Valida que el precio y la cantidad mostrados en la página del carrito coincidan exactamente con los del inventario para un producto agregado.",
+      "objective": "Confirmar la integridad del precio y cantidad reflejados en el carrito",
+      "priority": "alta",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce autenticado",
+        "El carrito está vacío al iniciar el caso"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username con 'standard_user' y Password con 'secret_sauce', luego hacer clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' de 'Sauce Labs Backpack'", "data": "N/A", "expected_result": "El contador del carrito muestra '1'" },
+        { "order": 4, "action": "Hacer clic en el ícono del carrito", "data": "N/A", "expected_result": "El sistema navega a /cart.html" },
+        { "order": 5, "action": "Obtener el detalle del ítem (nombre, precio, cantidad) desde '.cart_item'", "data": "N/A", "expected_result": "El arreglo de ítems tiene longitud 1, con precio exactamente $29.99 y cantidad 1" }
+      ],
+      "post_condition": "El carrito contiene 1 producto con datos consistentes",
+      "acceptance_criteria_covered": ["AC-CART-06"],
+      "derivation_trace": {
+        "quote": "expect(items).toHaveLength(1); expect(items[0].price).toBe(29.99); expect(items[0].quantity).toBe(1);",
+        "observed_in": "tests/cart/cart.spec.ts — 'El precio total en el carrito coincide con el precio del producto' (precio $29.99 confirmado en exploración en vivo)"
+      },
+      "automation_notes": "Selectores: .cart_item, .inventory_item_name, .inventory_item_price, .cart_quantity. Framework: Playwright + TypeScript."
+    }
+  ]
+}

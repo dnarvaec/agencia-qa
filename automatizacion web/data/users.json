@@ -1,0 +1,43 @@
+{
+  "valid": [
+    {
+      "username": "standard_user",
+      "password": "secret_sauce",
+      "description": "Usuario estándar con acceso completo"
+    },
+    {
+      "username": "performance_glitch_user",
+      "password": "secret_sauce",
+      "description": "Usuario con latencia simulada en la UI"
+    }
+  ],
+  "locked": [
+    {
+      "username": "locked_out_user",
+      "password": "secret_sauce",
+      "description": "Usuario bloqueado por el sistema"
+    }
+  ],
+  "invalid": [
+    {
+      "username": "usuario_inexistente",
+      "password": "clave_incorrecta",
+      "description": "Credenciales completamente incorrectas"
+    },
+    {
+      "username": "",
+      "password": "",
+      "description": "Ambos campos vacíos"
+    },
+    {
+      "username": "standard_user",
+      "password": "",
+      "description": "Contraseña vacía con usuario válido"
+    },
+    {
+      "username": "",
+      "password": "secret_sauce",
+      "description": "Usuario vacío con contraseña válida"
+    }
+  ]
+}

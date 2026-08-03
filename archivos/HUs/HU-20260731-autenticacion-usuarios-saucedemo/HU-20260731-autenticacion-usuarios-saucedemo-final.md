@@ -1,0 +1,23 @@
+## Autenticación de usuarios en la plataforma SauceDemo
+
+### Story ID
+HU-20260731-autenticacion-usuarios-saucedemo
+
+### Descripción
+Como usuario de la tienda demo SauceDemo, necesito poder autenticarme con mis credenciales para acceder al catálogo de productos y realizar compras, de manera que el sistema garantice que solo usuarios válidos puedan operar dentro de la plataforma.
+
+El flujo principal consiste en ingresar un nombre de usuario y una contraseña en el formulario de login; si las credenciales corresponden a un usuario activo y no bloqueado, el sistema debe autenticar la sesión y redirigir al catálogo de productos (/inventory.html). El sistema debe soportar además usuarios con comportamientos especiales, como aquellos que presentan latencia simulada en la interfaz, sin que esto impida el acceso.
+
+Como casos alternativos, el sistema debe rechazar el acceso de usuarios bloqueados mostrando un mensaje de error específico, y debe validar que los campos de usuario y contraseña sean obligatorios, mostrando errores cuando estén vacíos o cuando las credenciales no coincidan con ningún usuario registrado. Finalmente, cualquier usuario autenticado debe poder cerrar sesión desde el menú lateral de la aplicación, finalizando la sesión activa.
+
+### Criterios de Aceptación
+1. AC-LOGIN-01: El sistema debe permitir el acceso al inventario cuando el usuario ingresa credenciales válidas (standard_user/secret_sauce)
+2. AC-LOGIN-02: El sistema debe autenticar correctamente a usuarios con latencia simulada en la UI (performance_glitch_user) sin fallar el login
+3. AC-LOGIN-03: El sistema debe rechazar el acceso de usuarios bloqueados (locked_out_user) mostrando el mensaje 'Epic sadface: Sorry, this user has been locked out.'
+4. AC-LOGIN-04: El sistema debe mostrar un mensaje de error visible cuando las credenciales son inválidas, están incompletas o vacías (usuario inexistente, campos vacíos, combinaciones parciales)
+5. AC-LOGIN-05: El usuario autenticado debe poder cerrar sesión desde el menú lateral y ser redirigido a la página de login
+
+### Información de Mejora
+- Score inicial: 6/10 → Score final: 9/10
+- Iteraciones: 1
+- Cambios principales: HU generada a partir de la suite de casos de prueba TC-001 a TC-008 (módulo Login), ya automatizada y validada en vivo contra https://www.saucedemo.com. Se precisaron los mensajes de error exactos y las condiciones de bloqueo de usuario.

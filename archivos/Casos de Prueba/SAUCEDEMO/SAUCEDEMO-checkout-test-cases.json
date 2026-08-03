@@ -1,0 +1,248 @@
+{
+  "story_id": "SAUCEDEMO",
+  "story_title": "Automatización funcional SauceDemo — Módulo Checkout",
+  "generated_at": "2026-07-31T19:10:00Z",
+  "environment": {
+    "web": "https://www.saucedemo.com/"
+  },
+  "credentials": {
+    "web": [
+      { "user": "standard_user",          "role": "standard",           "password": "secret_sauce" },
+      { "user": "performance_glitch_user","role": "performance_glitch", "password": "secret_sauce" },
+      { "user": "problem_user",           "role": "problem",            "password": "secret_sauce" },
+      { "user": "error_user",             "role": "error",              "password": "secret_sauce" },
+      { "user": "visual_user",            "role": "visual",             "password": "secret_sauce" },
+      { "user": "locked_out_user",        "role": "locked_out",         "password": "secret_sauce" }
+    ]
+  },
+  "summary": {
+    "total_web": 8,
+    "total_api": 0,
+    "total_manual": 0,
+    "total": 8
+  },
+  "test_cases": [
+    {
+      "id": "TC-030",
+      "type": "web",
+      "title": "Flujo completo de compra con datos válidos estándar",
+      "description": "Valida el flujo end-to-end completo de compra: agregar producto, checkout con datos válidos, resumen de orden y confirmación final.",
+      "objective": "Confirmar que el flujo E2E de checkout se completa exitosamente con datos estándar",
+      "priority": "alta",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce autenticado",
+        "El carrito contiene el producto 'Sauce Labs Backpack'"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username con 'standard_user' y Password con 'secret_sauce', luego hacer clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' de 'Sauce Labs Backpack' y luego en el ícono del carrito", "data": "N/A", "expected_result": "El sistema navega a /cart.html mostrando el producto" },
+        { "order": 4, "action": "Hacer clic en el botón 'Checkout' ([data-test='checkout'])", "data": "N/A", "expected_result": "El sistema navega a /checkout-step-one.html" },
+        { "order": 5, "action": "Completar First Name='John', Last Name='Doe', Zip Code='12345' y hacer clic en 'Continue'", "data": "firstName: John, lastName: Doe, zipCode: 12345", "expected_result": "El sistema navega a /checkout-step-two.html mostrando el resumen del pedido" },
+        { "order": 6, "action": "Verificar los valores de Item total, Tax y Total en el resumen", "data": "N/A", "expected_result": "Item total > 0, Tax > 0, y Total = Item total + Tax (con margen de redondeo). Ejemplo real: Item total $29.99, Tax $2.40, Total $32.39" },
+        { "order": 7, "action": "Hacer clic en el botón 'Finish' ([data-test='finish'])", "data": "N/A", "expected_result": "El sistema navega a /checkout-complete.html mostrando el encabezado 'Thank you for your order!'" }
+      ],
+      "post_condition": "El pedido se completa exitosamente y el carrito queda vacío",
+      "acceptance_criteria_covered": ["AC-CHK-01"],
+      "derivation_trace": {
+        "quote": "expect(total).toBeCloseTo(itemTotal + tax, 2); await checkoutOverviewPage.finishOrder(); await checkoutCompletePage.expectOrderComplete();",
+        "observed_in": "tests/checkout/checkout-e2e.spec.ts — 'Flujo completo de compra' → 'Datos válidos estándar' (totales confirmados en exploración en vivo: $29.99 + $2.40 = $32.39)"
+      },
+      "automation_notes": "Selectores: [data-test='checkout'], [data-test='continue'], [data-test='finish'], .complete-header. Framework: Playwright + TypeScript. Dato fuente: data/checkout.json → validInfo[0]."
+    },
+    {
+      "id": "TC-031",
+      "type": "web",
+      "title": "Flujo completo de compra con datos válidos y caracteres especiales",
+      "description": "Valida el flujo E2E de checkout usando datos con acentos y caracteres especiales en nombre y apellido (María García).",
+      "objective": "Confirmar que el checkout admite caracteres especiales/acentuados sin fallar",
+      "priority": "media",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce autenticado",
+        "El carrito contiene el producto 'Sauce Labs Backpack'"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username con 'standard_user' y Password con 'secret_sauce', luego hacer clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' de 'Sauce Labs Backpack' y luego en el ícono del carrito", "data": "N/A", "expected_result": "El sistema navega a /cart.html mostrando el producto" },
+        { "order": 4, "action": "Hacer clic en el botón 'Checkout'", "data": "N/A", "expected_result": "El sistema navega a /checkout-step-one.html" },
+        { "order": 5, "action": "Completar First Name='María', Last Name='García', Zip Code='28001' y hacer clic en 'Continue'", "data": "firstName: María, lastName: García, zipCode: 28001", "expected_result": "El sistema navega a /checkout-step-two.html mostrando el resumen del pedido sin errores de codificación" },
+        { "order": 6, "action": "Verificar los valores de Item total, Tax y Total", "data": "N/A", "expected_result": "Item total > 0, Tax > 0, y Total = Item total + Tax" },
+        { "order": 7, "action": "Hacer clic en el botón 'Finish'", "data": "N/A", "expected_result": "El sistema navega a /checkout-complete.html mostrando 'Thank you for your order!'" }
+      ],
+      "post_condition": "El pedido se completa exitosamente",
+      "acceptance_criteria_covered": ["AC-CHK-01", "AC-CHK-02"],
+      "derivation_trace": {
+        "quote": "description: 'Datos válidos con caracteres especiales', firstName: 'María', lastName: 'García'",
+        "observed_in": "tests/checkout/checkout-e2e.spec.ts — 'Flujo completo de compra' (data/checkout.json → validInfo[1])"
+      },
+      "automation_notes": "Framework: Playwright + TypeScript. Valida soporte UTF-8 en campos de formulario."
+    },
+    {
+      "id": "TC-032",
+      "type": "web",
+      "title": "Flujo completo de compra con apellido compuesto",
+      "description": "Valida el flujo E2E de checkout usando un apellido compuesto de dos palabras (López Martínez) y un código postal más largo.",
+      "objective": "Confirmar que el checkout admite apellidos compuestos y códigos postales de distinta longitud",
+      "priority": "media",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce autenticado",
+        "El carrito contiene el producto 'Sauce Labs Backpack'"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username con 'standard_user' y Password con 'secret_sauce', luego hacer clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' de 'Sauce Labs Backpack' y luego en el ícono del carrito", "data": "N/A", "expected_result": "El sistema navega a /cart.html mostrando el producto" },
+        { "order": 4, "action": "Hacer clic en el botón 'Checkout'", "data": "N/A", "expected_result": "El sistema navega a /checkout-step-one.html" },
+        { "order": 5, "action": "Completar First Name='Carlos', Last Name='López Martínez', Zip Code='050001' y hacer clic en 'Continue'", "data": "firstName: Carlos, lastName: López Martínez, zipCode: 050001", "expected_result": "El sistema navega a /checkout-step-two.html mostrando el resumen del pedido" },
+        { "order": 6, "action": "Verificar los valores de Item total, Tax y Total", "data": "N/A", "expected_result": "Item total > 0, Tax > 0, y Total = Item total + Tax" },
+        { "order": 7, "action": "Hacer clic en el botón 'Finish'", "data": "N/A", "expected_result": "El sistema navega a /checkout-complete.html mostrando 'Thank you for your order!'" }
+      ],
+      "post_condition": "El pedido se completa exitosamente",
+      "acceptance_criteria_covered": ["AC-CHK-01", "AC-CHK-02"],
+      "derivation_trace": {
+        "quote": "description: 'Datos válidos con apellido compuesto', lastName: 'López Martínez', zipCode: '050001'",
+        "observed_in": "tests/checkout/checkout-e2e.spec.ts — 'Flujo completo de compra' (data/checkout.json → validInfo[2])"
+      },
+      "automation_notes": "Framework: Playwright + TypeScript. Valida apellidos con espacios y códigos postales de 6 dígitos."
+    },
+    {
+      "id": "TC-033",
+      "type": "web",
+      "title": "Error de validación en checkout: nombre vacío",
+      "description": "Valida que el sistema impida avanzar en el checkout y muestre un error cuando el campo First Name está vacío.",
+      "objective": "Confirmar la validación obligatoria del campo First Name",
+      "priority": "media",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce autenticado",
+        "El carrito contiene el producto 'Sauce Labs Backpack'",
+        "El usuario se encuentra en /checkout-step-one.html"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username con 'standard_user' y Password con 'secret_sauce', luego hacer clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' de 'Sauce Labs Backpack', luego en el carrito y en 'Checkout'", "data": "N/A", "expected_result": "El sistema navega a /checkout-step-one.html" },
+        { "order": 4, "action": "Dejar First Name vacío, completar Last Name='Doe' y Zip Code='12345', luego hacer clic en 'Continue'", "data": "firstName: '', lastName: Doe, zipCode: 12345", "expected_result": "El sistema muestra un mensaje de error en [data-test='error'] y no avanza a checkout-step-two.html" }
+      ],
+      "post_condition": "El usuario permanece en /checkout-step-one.html",
+      "acceptance_criteria_covered": ["AC-CHK-03"],
+      "derivation_trace": {
+        "quote": "const error = await checkoutInfoPage.getErrorMessage(); expect(error.length).toBeGreaterThan(0);",
+        "observed_in": "tests/checkout/checkout-e2e.spec.ts — 'Validación de campos obligatorios' → 'Error: Nombre vacío'"
+      },
+      "automation_notes": "Selector: [data-test='error']. Framework: Playwright + TypeScript. Dato fuente: data/checkout.json → invalidInfo[0]."
+    },
+    {
+      "id": "TC-034",
+      "type": "web",
+      "title": "Error de validación en checkout: apellido vacío",
+      "description": "Valida que el sistema impida avanzar en el checkout y muestre un error cuando el campo Last Name está vacío.",
+      "objective": "Confirmar la validación obligatoria del campo Last Name",
+      "priority": "media",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce autenticado",
+        "El carrito contiene el producto 'Sauce Labs Backpack'",
+        "El usuario se encuentra en /checkout-step-one.html"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username con 'standard_user' y Password con 'secret_sauce', luego hacer clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' de 'Sauce Labs Backpack', luego en el carrito y en 'Checkout'", "data": "N/A", "expected_result": "El sistema navega a /checkout-step-one.html" },
+        { "order": 4, "action": "Completar First Name='John', dejar Last Name vacío y Zip Code='12345', luego hacer clic en 'Continue'", "data": "firstName: John, lastName: '', zipCode: 12345", "expected_result": "El sistema muestra un mensaje de error en [data-test='error'] y no avanza a checkout-step-two.html" }
+      ],
+      "post_condition": "El usuario permanece en /checkout-step-one.html",
+      "acceptance_criteria_covered": ["AC-CHK-03"],
+      "derivation_trace": {
+        "quote": "const error = await checkoutInfoPage.getErrorMessage(); expect(error.length).toBeGreaterThan(0);",
+        "observed_in": "tests/checkout/checkout-e2e.spec.ts — 'Validación de campos obligatorios' → 'Error: Apellido vacío'"
+      },
+      "automation_notes": "Selector: [data-test='error']. Framework: Playwright + TypeScript. Dato fuente: data/checkout.json → invalidInfo[1]."
+    },
+    {
+      "id": "TC-035",
+      "type": "web",
+      "title": "Error de validación en checkout: código postal vacío",
+      "description": "Valida que el sistema impida avanzar en el checkout y muestre un error cuando el campo Zip/Postal Code está vacío.",
+      "objective": "Confirmar la validación obligatoria del campo Zip/Postal Code",
+      "priority": "media",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce autenticado",
+        "El carrito contiene el producto 'Sauce Labs Backpack'",
+        "El usuario se encuentra en /checkout-step-one.html"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username con 'standard_user' y Password con 'secret_sauce', luego hacer clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' de 'Sauce Labs Backpack', luego en el carrito y en 'Checkout'", "data": "N/A", "expected_result": "El sistema navega a /checkout-step-one.html" },
+        { "order": 4, "action": "Completar First Name='John', Last Name='Doe' y dejar Zip Code vacío, luego hacer clic en 'Continue'", "data": "firstName: John, lastName: Doe, zipCode: ''", "expected_result": "El sistema muestra un mensaje de error en [data-test='error'] y no avanza a checkout-step-two.html" }
+      ],
+      "post_condition": "El usuario permanece en /checkout-step-one.html",
+      "acceptance_criteria_covered": ["AC-CHK-03"],
+      "derivation_trace": {
+        "quote": "const error = await checkoutInfoPage.getErrorMessage(); expect(error.length).toBeGreaterThan(0);",
+        "observed_in": "tests/checkout/checkout-e2e.spec.ts — 'Validación de campos obligatorios' → 'Error: Código postal vacío'"
+      },
+      "automation_notes": "Selector: [data-test='error']. Framework: Playwright + TypeScript. Dato fuente: data/checkout.json → invalidInfo[2]."
+    },
+    {
+      "id": "TC-036",
+      "type": "web",
+      "title": "Cancelar el checkout desde el paso 1 regresa al carrito",
+      "description": "Valida que el botón 'Cancel' en checkout-step-one.html redirija correctamente a la página del carrito conservando el producto.",
+      "objective": "Confirmar la navegación de cancelación desde el primer paso del checkout",
+      "priority": "media",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce autenticado",
+        "El carrito contiene el producto 'Sauce Labs Backpack'",
+        "El usuario se encuentra en /checkout-step-one.html"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username con 'standard_user' y Password con 'secret_sauce', luego hacer clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' de 'Sauce Labs Backpack', luego en el carrito y en 'Checkout'", "data": "N/A", "expected_result": "El sistema navega a /checkout-step-one.html" },
+        { "order": 4, "action": "Hacer clic en el botón 'Cancel' ([data-test='cancel'])", "data": "N/A", "expected_result": "El sistema navega de regreso a /cart.html y el producto 'Sauce Labs Backpack' sigue presente (conteo = 1)" }
+      ],
+      "post_condition": "El carrito conserva el producto agregado",
+      "acceptance_criteria_covered": ["AC-CHK-04"],
+      "derivation_trace": {
+        "quote": "await checkoutInfoPage.cancel(); await cartPage.expectCartCount(1);",
+        "observed_in": "tests/checkout/checkout-e2e.spec.ts — 'Cancelar el checkout regresa al carrito'"
+      },
+      "automation_notes": "Selector: [data-test='cancel']. Framework: Playwright + TypeScript."
+    },
+    {
+      "id": "TC-037",
+      "type": "web",
+      "title": "Cancelar en el resumen del checkout regresa al inventario",
+      "description": "Valida que el botón 'Cancel' en checkout-step-two.html redirija correctamente al inventario de productos.",
+      "objective": "Confirmar la navegación de cancelación desde el segundo paso (resumen) del checkout",
+      "priority": "media",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce autenticado",
+        "El carrito contiene el producto 'Sauce Labs Backpack'",
+        "El usuario se encuentra en /checkout-step-two.html"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username con 'standard_user' y Password con 'secret_sauce', luego hacer clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' de 'Sauce Labs Backpack', luego en el carrito, en 'Checkout' y completar los datos válidos (John/Doe/12345), hacer clic en 'Continue'", "data": "firstName: John, lastName: Doe, zipCode: 12345", "expected_result": "El sistema navega a /checkout-step-two.html mostrando el resumen del pedido" },
+        { "order": 4, "action": "Hacer clic en el botón 'Cancel' ([data-test='cancel'])", "data": "N/A", "expected_result": "El sistema navega de regreso a /inventory.html mostrando el título 'Products'" }
+      ],
+      "post_condition": "El usuario se encuentra en /inventory.html",
+      "acceptance_criteria_covered": ["AC-CHK-04"],
+      "derivation_trace": {
+        "quote": "await checkoutOverviewPage.cancel(); await inventoryPage.expectOnInventoryPage();",
+        "observed_in": "tests/checkout/checkout-e2e.spec.ts — 'Cancelar en el resumen regresa al inventario'"
+      },
+      "automation_notes": "Selector: [data-test='cancel']. Framework: Playwright + TypeScript."
+    }
+  ]
+}

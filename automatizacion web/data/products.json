@@ -1,0 +1,50 @@
+{
+  "all": [
+    { "name": "Sauce Labs Backpack",              "expectedPrice": 29.99 },
+    { "name": "Sauce Labs Bike Light",            "expectedPrice": 9.99  },
+    { "name": "Sauce Labs Bolt T-Shirt",          "expectedPrice": 15.99 },
+    { "name": "Sauce Labs Fleece Jacket",         "expectedPrice": 49.99 },
+    { "name": "Sauce Labs Onesie",                "expectedPrice": 7.99  },
+    { "name": "Test.allTheThings() T-Shirt (Red)","expectedPrice": 15.99 }
+  ],
+  "cartScenarios": [
+    {
+      "scenario": "Agregar un solo producto al carrito",
+      "products": ["Sauce Labs Backpack"]
+    },
+    {
+      "scenario": "Agregar múltiples productos al carrito",
+      "products": ["Sauce Labs Backpack", "Sauce Labs Bike Light", "Sauce Labs Bolt T-Shirt"]
+    },
+    {
+      "scenario": "Agregar el producto más caro al carrito",
+      "products": ["Sauce Labs Fleece Jacket"]
+    },
+    {
+      "scenario": "Agregar el producto más barato al carrito",
+      "products": ["Sauce Labs Onesie"]
+    }
+  ],
+  "sortScenarios": [
+    {
+      "option": "lohi",
+      "description": "Ordenar de menor a mayor precio",
+      "expectedOrder": "ascending"
+    },
+    {
+      "option": "hilo",
+      "description": "Ordenar de mayor a menor precio",
+      "expectedOrder": "descending"
+    },
+    {
+      "option": "az",
+      "description": "Ordenar de A a Z por nombre",
+      "expectedOrder": "az"
+    },
+    {
+      "option": "za",
+      "description": "Ordenar de Z a A por nombre",
+      "expectedOrder": "za"
+    }
+  ]
+}
