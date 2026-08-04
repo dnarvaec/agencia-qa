@@ -80,4 +80,67 @@ test.describe('Carrito de compras', () => {
     expect(items[0].price).toBe(29.99);
     expect(items[0].quantity).toBe(1);
   });
+
+  test('Eliminar un producto del carrito con múltiples ítems presentes', async ({
+    inventoryPage,
+    cartPage,
+    header,
+  }) => {
+    await inventoryPage.addItemToCartByName('Sauce Labs Backpack');
+    await inventoryPage.addItemToCartByName('Sauce Labs Bike Light');
+    await header.expectCartCount(2);
+    await header.openCart();
+    await cartPage.removeItemByName('Sauce Labs Bike Light');
+    await cartPage.expectItemInCart('Sauce Labs Backpack');
+    await cartPage.expectCartCount(1);
+    await header.expectCartCount(1);
+  });
+
+  test('El contador del carrito no se muestra cuando el carrito está vacío', async ({
+    header,
+    cartPage,
+  }) => {
+    await header.expectCartCount(0);
+    await header.openCart();
+    await cartPage.expectCartEmpty();
+  });
+
+  test('El precio y la cantidad del producto en el carrito persisten tras recargar la página', async ({
+    inventoryPage,
+    cartPage,
+    header,
+    page,
+  }) => {
+    await inventoryPage.addItemToCartByName('Sauce Labs Backpack');
+    await header.openCart();
+    await page.reload();
+    const items = await cartPage.getCartItems();
+    expect(items).toHaveLength(1);
+    expect(items[0].name).toBe('Sauce Labs Backpack');
+    expect(items[0].price).toBe(29.99);
+    expect(items[0].quantity).toBe(1);
+  });
+
+  test('El contador del carrito se mantiene consistente tras una secuencia de adiciones y eliminaciones', async ({
+    inventoryPage,
+    cartPage,
+    header,
+  }) => {
+    await inventoryPage.addItemToCartByName('Sauce Labs Backpack');
+    await inventoryPage.addItemToCartByName('Sauce Labs Bike Light');
+    await inventoryPage.addItemToCartByName('Sauce Labs Bolt T-Shirt');
+    await header.expectCartCount(3);
+
+    await inventoryPage.removeItemFromCartByName('Sauce Labs Bike Light');
+    await header.expectCartCount(2);
+
+    await inventoryPage.addItemToCartByName('Sauce Labs Fleece Jacket');
+    await header.expectCartCount(3);
+
+    await header.openCart();
+    await cartPage.expectItemInCart('Sauce Labs Backpack');
+    await cartPage.expectItemInCart('Sauce Labs Bolt T-Shirt');
+    await cartPage.expectItemInCart('Sauce Labs Fleece Jacket');
+    await cartPage.expectCartCount(3);
+  });
 });

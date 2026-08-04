@@ -1,0 +1,30 @@
+{
+  "story_id": "1",
+  "story_title": "Gestión del carrito de compras en SauceDemo",
+  "uploaded_at": "2026-08-03T23:06:00Z",
+  "mode": "work_items",
+  "plan_id": null,
+  "plan_name": null,
+  "suite_id": null,
+  "suite_name": null,
+  "azure_devops_url": "https://dev.azure.com/dnarvaec/poc_comfama/_workitems/",
+  "summary": {
+    "total_local": 12,
+    "total_uploaded": 12,
+    "total_errors": 0
+  },
+  "cases": [
+    { "id_local": "TC-001", "id_azure": 5, "title": "Agregar un solo producto al carrito y verificar su reflejo en la vista del carrito", "type": "web", "priority": "alta", "status": "uploaded", "error": null },
+    { "id_local": "TC-002", "id_azure": 6, "title": "Agregar múltiples productos simultáneamente al carrito", "type": "web", "priority": "alta", "status": "uploaded", "error": null },
+    { "id_local": "TC-003", "id_azure": 7, "title": "Agregar el producto de mayor precio del catálogo (caso límite)", "type": "web", "priority": "media", "status": "uploaded", "error": null },
+    { "id_local": "TC-004", "id_azure": 8, "title": "Agregar el producto de menor precio del catálogo (caso límite)", "type": "web", "priority": "media", "status": "uploaded", "error": null },
+    { "id_local": "TC-005", "id_azure": 9, "title": "Eliminar el único producto del carrito y verificar que queda vacío", "type": "web", "priority": "alta", "status": "uploaded", "error": null },
+    { "id_local": "TC-006", "id_azure": 10, "title": "Eliminar un producto del carrito con múltiples ítems presentes", "type": "web", "priority": "media", "status": "uploaded", "error": null },
+    { "id_local": "TC-007", "id_azure": 11, "title": "Verificar actualización inmediata del contador del carrito al agregar productos", "type": "web", "priority": "alta", "status": "uploaded", "error": null },
+    { "id_local": "TC-008", "id_azure": 12, "title": "Verificar actualización inmediata del contador del carrito al eliminar productos", "type": "web", "priority": "alta", "status": "uploaded", "error": null },
+    { "id_local": "TC-009", "id_azure": 13, "title": "Regresar al inventario desde el carrito mediante 'Continue Shopping' sin perder los productos agregados", "type": "web", "priority": "alta", "status": "uploaded", "error": null },
+    { "id_local": "TC-010", "id_azure": 14, "title": "Verificar que el precio y cantidad del producto en el carrito persisten y coinciden con el inventario tras recargar la página", "type": "web", "priority": "alta", "status": "uploaded", "error": null },
+    { "id_local": "TC-011", "id_azure": 15, "title": "Verificar que el contador del carrito no se muestra cuando el carrito está vacío (caso límite)", "type": "web", "priority": "baja", "status": "uploaded", "error": null },
+    { "id_local": "TC-012", "id_azure": 16, "title": "Verificar consistencia del contador del carrito tras una secuencia de adiciones y eliminaciones", "type": "web", "priority": "media", "status": "uploaded", "error": null }
+  ]
+}

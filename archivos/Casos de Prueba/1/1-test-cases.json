@@ -1,0 +1,355 @@
+{
+  "story_id": "1",
+  "story_title": "Gestión del carrito de compras en SauceDemo",
+  "generated_at": "2026-08-03T00:00:00Z",
+  "environment": {
+    "web": "https://www.saucedemo.com/"
+  },
+  "credentials": {
+    "web": [
+      { "user": "standard_user", "role": "standard", "password": "secret_sauce" },
+      { "user": "performance_glitch_user", "role": "performance_glitch", "password": "secret_sauce" },
+      { "user": "problem_user", "role": "problem", "password": "secret_sauce" },
+      { "user": "error_user", "role": "error", "password": "secret_sauce" },
+      { "user": "visual_user", "role": "visual", "password": "secret_sauce" },
+      { "user": "locked_out_user", "role": "locked_out", "password": "secret_sauce" }
+    ]
+  },
+  "summary": {
+    "total_web": 12,
+    "total_api": 0,
+    "total_manual": 0,
+    "total": 12
+  },
+  "test_cases": [
+    {
+      "id": "TC-001",
+      "type": "web",
+      "title": "Agregar un solo producto al carrito y verificar su reflejo en la vista del carrito",
+      "description": "Valida que al agregar un único producto desde el inventario, este se refleje correctamente en la página del carrito con nombre, precio y cantidad exactos.",
+      "objective": "Confirmar que el sistema permite agregar un producto al carrito y lo muestra correctamente en /cart.html",
+      "priority": "alta",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce válido para autenticación en https://www.saucedemo.com/",
+        "El carrito de compras está vacío al iniciar el caso"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login con los campos Username y Password" },
+        { "order": 2, "action": "Completar el campo Username con 'standard_user' y el campo Password con 'secret_sauce', luego hacer clic en el botón Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema autentica al usuario y navega a /inventory.html mostrando el catálogo de 6 productos" },
+        { "order": 3, "action": "Hacer clic en el botón 'Add to cart' del producto Sauce Labs Backpack", "data": "Selector: [data-test='add-to-cart-sauce-labs-backpack']", "expected_result": "El botón cambia a 'Remove' y el contador del carrito (.shopping_cart_badge) muestra '1'" },
+        { "order": 4, "action": "Hacer clic en el ícono del carrito", "data": "Selector: .shopping_cart_link", "expected_result": "El sistema navega a /cart.html mostrando la página del carrito" },
+        { "order": 5, "action": "Verificar el contenido del ítem en el carrito", "data": "Selectores: .cart_item, .inventory_item_name, .inventory_item_price, .cart_quantity", "expected_result": "Se muestra exactamente 1 ítem: nombre 'Sauce Labs Backpack', precio '$29.99', cantidad '1'" }
+      ],
+      "post_condition": "El carrito contiene 1 producto (Sauce Labs Backpack)",
+      "acceptance_criteria_covered": ["AC-CART-01"],
+      "derivation_trace": {
+        "quote": "El sistema debe permitir agregar uno o varios productos al carrito y reflejarlos correctamente en la vista del carrito",
+        "observed_in": "Criterio AC-CART-01 de la HU 1 — sección: Gestión del carrito de compras en SauceDemo"
+      },
+      "automation_notes": "Selectores: [data-test='add-to-cart-sauce-labs-backpack'], .shopping_cart_link, .cart_item, .inventory_item_name, .inventory_item_price, .cart_quantity. URL esperada: /cart.html. Framework: Playwright + TypeScript (Page Object Model)"
+    },
+    {
+      "id": "TC-002",
+      "type": "web",
+      "title": "Agregar múltiples productos simultáneamente al carrito",
+      "description": "Valida que el sistema soporta la adición de varios productos a la vez y que todos se reflejan correctamente en el carrito.",
+      "objective": "Confirmar que al agregar 3 productos distintos, los 3 aparecen en /cart.html con su nombre y precio correctos",
+      "priority": "alta",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce válido para autenticación en https://www.saucedemo.com/",
+        "El carrito de compras está vacío al iniciar el caso"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username 'standard_user' y Password 'secret_sauce', clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' de Sauce Labs Backpack, Sauce Labs Bike Light y Sauce Labs Bolt T-Shirt", "data": "Selectores: [data-test='add-to-cart-sauce-labs-backpack'], [data-test='add-to-cart-sauce-labs-bike-light'], [data-test='add-to-cart-sauce-labs-bolt-t-shirt']", "expected_result": "El contador del carrito (.shopping_cart_badge) muestra '3' tras cada adición sucesiva (1, 2, 3)" },
+        { "order": 4, "action": "Hacer clic en el ícono del carrito", "data": "Selector: .shopping_cart_link", "expected_result": "El sistema navega a /cart.html" },
+        { "order": 5, "action": "Verificar los 3 ítems listados en el carrito", "data": "Selectores: .cart_item, .inventory_item_name, .inventory_item_price", "expected_result": "Se muestran exactamente 3 ítems: 'Sauce Labs Backpack' ($29.99), 'Sauce Labs Bike Light' ($9.99) y 'Sauce Labs Bolt T-Shirt' ($15.99), cada uno con cantidad '1'" }
+      ],
+      "post_condition": "El carrito contiene 3 productos",
+      "acceptance_criteria_covered": ["AC-CART-01"],
+      "derivation_trace": {
+        "quote": "El sistema debe soportar la adición de múltiples productos simultáneamente",
+        "observed_in": "Criterio AC-CART-01 de la HU 1 — sección: Gestión del carrito de compras en SauceDemo"
+      },
+      "automation_notes": "Selectores: [data-test^='add-to-cart-'], .shopping_cart_badge, .cart_item, .inventory_item_name, .inventory_item_price. URL esperada: /cart.html. Framework: Playwright + TypeScript (Page Object Model)"
+    },
+    {
+      "id": "TC-003",
+      "type": "web",
+      "title": "Agregar el producto de mayor precio del catálogo (caso límite)",
+      "description": "Valida el caso límite de precio superior: el producto más caro del catálogo (Sauce Labs Fleece Jacket, $49.99) se agrega correctamente al carrito.",
+      "objective": "Confirmar que el producto con el precio más alto se agrega y se muestra con nombre y precio exactos en el carrito",
+      "priority": "media",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce válido para autenticación en https://www.saucedemo.com/",
+        "El carrito de compras está vacío al iniciar el caso"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username 'standard_user' y Password 'secret_sauce', clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html mostrando el catálogo de 6 productos" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' del producto Sauce Labs Fleece Jacket (precio más alto del catálogo)", "data": "Selector: [data-test='add-to-cart-sauce-labs-fleece-jacket']", "expected_result": "El botón cambia a 'Remove' y el contador del carrito muestra '1'" },
+        { "order": 4, "action": "Hacer clic en el ícono del carrito", "data": "Selector: .shopping_cart_link", "expected_result": "El sistema navega a /cart.html" },
+        { "order": 5, "action": "Verificar el nombre y precio del ítem en el carrito", "data": "Selectores: .inventory_item_name, .inventory_item_price", "expected_result": "Se muestra 'Sauce Labs Fleece Jacket' con precio '$49.99', idéntico al mostrado en el inventario" }
+      ],
+      "post_condition": "El carrito contiene el producto de mayor precio del catálogo",
+      "acceptance_criteria_covered": ["AC-CART-02"],
+      "derivation_trace": {
+        "quote": "El sistema debe permitir agregar correctamente al carrito el producto de mayor precio y el producto de menor precio del catálogo, mostrando su nombre y precio exactos en la vista del carrito",
+        "observed_in": "Criterio AC-CART-02 de la HU 1 — sección: Gestión del carrito de compras en SauceDemo"
+      },
+      "automation_notes": "Selectores: [data-test='add-to-cart-sauce-labs-fleece-jacket'], .inventory_item_name, .inventory_item_price. Precio de referencia validado en exploración en vivo: $49.99. URL esperada: /cart.html. Framework: Playwright + TypeScript (Page Object Model)"
+    },
+    {
+      "id": "TC-004",
+      "type": "web",
+      "title": "Agregar el producto de menor precio del catálogo (caso límite)",
+      "description": "Valida el caso límite de precio inferior: el producto más barato del catálogo (Sauce Labs Onesie, $7.99) se agrega correctamente al carrito.",
+      "objective": "Confirmar que el producto con el precio más bajo se agrega y se muestra con nombre y precio exactos en el carrito",
+      "priority": "media",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce válido para autenticación en https://www.saucedemo.com/",
+        "El carrito de compras está vacío al iniciar el caso"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username 'standard_user' y Password 'secret_sauce', clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html mostrando el catálogo de 6 productos" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' del producto Sauce Labs Onesie (precio más bajo del catálogo)", "data": "Selector: [data-test='add-to-cart-sauce-labs-onesie']", "expected_result": "El botón cambia a 'Remove' y el contador del carrito muestra '1'" },
+        { "order": 4, "action": "Hacer clic en el ícono del carrito", "data": "Selector: .shopping_cart_link", "expected_result": "El sistema navega a /cart.html" },
+        { "order": 5, "action": "Verificar el nombre y precio del ítem en el carrito", "data": "Selectores: .inventory_item_name, .inventory_item_price", "expected_result": "Se muestra 'Sauce Labs Onesie' con precio '$7.99', idéntico al mostrado en el inventario" }
+      ],
+      "post_condition": "El carrito contiene el producto de menor precio del catálogo",
+      "acceptance_criteria_covered": ["AC-CART-02"],
+      "derivation_trace": {
+        "quote": "El sistema debe permitir agregar correctamente al carrito el producto de mayor precio y el producto de menor precio del catálogo, mostrando su nombre y precio exactos en la vista del carrito",
+        "observed_in": "Criterio AC-CART-02 de la HU 1 — sección: Gestión del carrito de compras en SauceDemo"
+      },
+      "automation_notes": "Selectores: [data-test='add-to-cart-sauce-labs-onesie'], .inventory_item_name, .inventory_item_price. Precio de referencia validado en exploración en vivo: $7.99. URL esperada: /cart.html. Framework: Playwright + TypeScript (Page Object Model)"
+    },
+    {
+      "id": "TC-005",
+      "type": "web",
+      "title": "Eliminar el único producto del carrito y verificar que queda vacío",
+      "description": "Valida que al eliminar un producto que es el único ítem del carrito, este queda completamente vacío.",
+      "objective": "Confirmar que el carrito queda vacío tras eliminar su único producto",
+      "priority": "alta",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce válido para autenticación en https://www.saucedemo.com/",
+        "El carrito contiene exactamente 1 producto (Sauce Labs Backpack) antes de ejecutar la eliminación"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username 'standard_user' y Password 'secret_sauce', clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' del producto Sauce Labs Backpack", "data": "Selector: [data-test='add-to-cart-sauce-labs-backpack']", "expected_result": "El contador del carrito muestra '1'" },
+        { "order": 4, "action": "Hacer clic en el ícono del carrito", "data": "Selector: .shopping_cart_link", "expected_result": "El sistema navega a /cart.html mostrando 1 ítem" },
+        { "order": 5, "action": "Hacer clic en el botón 'Remove' del producto Sauce Labs Backpack", "data": "Selector: [data-test='remove-sauce-labs-backpack']", "expected_result": "El ítem desaparece de la lista del carrito" },
+        { "order": 6, "action": "Verificar el estado del carrito y el contador", "data": "Selectores: .cart_item, .shopping_cart_badge", "expected_result": "No se muestra ningún .cart_item en la página y el contador del carrito (.shopping_cart_badge) desaparece del encabezado (0 productos)" }
+      ],
+      "post_condition": "El carrito queda vacío",
+      "acceptance_criteria_covered": ["AC-CART-03"],
+      "derivation_trace": {
+        "quote": "El usuario debe poder eliminar un producto del carrito, dejándolo vacío si era el único ítem",
+        "observed_in": "Criterio AC-CART-03 de la HU 1 — sección: Gestión del carrito de compras en SauceDemo"
+      },
+      "automation_notes": "Selectores: [data-test='remove-sauce-labs-backpack'], .cart_item, .shopping_cart_badge. URL esperada: /cart.html. Framework: Playwright + TypeScript (Page Object Model)"
+    },
+    {
+      "id": "TC-006",
+      "type": "web",
+      "title": "Eliminar un producto del carrito con múltiples ítems presentes",
+      "description": "Valida que al eliminar un producto específico de un carrito con varios ítems, solo ese producto se elimina y los demás permanecen intactos.",
+      "objective": "Confirmar que la eliminación de un ítem no afecta a los demás productos del carrito",
+      "priority": "media",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce válido para autenticación en https://www.saucedemo.com/",
+        "El carrito contiene 2 productos (Sauce Labs Backpack y Sauce Labs Bike Light) antes de ejecutar la eliminación"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username 'standard_user' y Password 'secret_sauce', clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' de Sauce Labs Backpack y Sauce Labs Bike Light", "data": "Selectores: [data-test='add-to-cart-sauce-labs-backpack'], [data-test='add-to-cart-sauce-labs-bike-light']", "expected_result": "El contador del carrito muestra '2'" },
+        { "order": 4, "action": "Hacer clic en el ícono del carrito", "data": "Selector: .shopping_cart_link", "expected_result": "El sistema navega a /cart.html mostrando 2 ítems" },
+        { "order": 5, "action": "Hacer clic en el botón 'Remove' del producto Sauce Labs Bike Light", "data": "Selector: [data-test='remove-sauce-labs-bike-light']", "expected_result": "El ítem 'Sauce Labs Bike Light' desaparece de la lista" },
+        { "order": 6, "action": "Verificar el contenido restante del carrito y el contador", "data": "Selectores: .cart_item, .inventory_item_name, .shopping_cart_badge", "expected_result": "Se muestra únicamente 1 ítem, 'Sauce Labs Backpack' ($29.99), y el contador del carrito muestra '1'" }
+      ],
+      "post_condition": "El carrito contiene únicamente Sauce Labs Backpack",
+      "acceptance_criteria_covered": ["AC-CART-03"],
+      "derivation_trace": {
+        "quote": "El usuario debe poder eliminar un producto del carrito, dejándolo vacío si era el único ítem",
+        "observed_in": "Criterio AC-CART-03 de la HU 1 — sección: Gestión del carrito de compras en SauceDemo"
+      },
+      "automation_notes": "Selectores: [data-test='remove-sauce-labs-bike-light'], .cart_item, .inventory_item_name, .shopping_cart_badge. URL esperada: /cart.html. Framework: Playwright + TypeScript (Page Object Model)"
+    },
+    {
+      "id": "TC-007",
+      "type": "web",
+      "title": "Verificar actualización inmediata del contador del carrito al agregar productos",
+      "description": "Valida que el contador del carrito en el encabezado se actualiza de forma inmediata y sin recargar la página ante cada adición de producto.",
+      "objective": "Confirmar que el badge del carrito refleja el conteo correcto tras cada clic en 'Add to cart', sin necesidad de recargar",
+      "priority": "alta",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce válido para autenticación en https://www.saucedemo.com/",
+        "El carrito de compras está vacío al iniciar el caso"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username 'standard_user' y Password 'secret_sauce', clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html. No se muestra el badge del carrito (0 productos)" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' de Sauce Labs Backpack, sin recargar la página", "data": "Selector: [data-test='add-to-cart-sauce-labs-backpack']", "expected_result": "El .shopping_cart_badge aparece inmediatamente mostrando '1', sin recarga de página" },
+        { "order": 4, "action": "Hacer clic en 'Add to cart' de Sauce Labs Bike Light, sin recargar la página", "data": "Selector: [data-test='add-to-cart-sauce-labs-bike-light']", "expected_result": "El .shopping_cart_badge se actualiza inmediatamente a '2', sin recarga de página" }
+      ],
+      "post_condition": "El carrito contiene 2 productos y el contador muestra '2'",
+      "acceptance_criteria_covered": ["AC-CART-04"],
+      "derivation_trace": {
+        "quote": "El contador del carrito debe actualizarse de forma inmediata y sin necesidad de recargar la página, ante cada adición o eliminación de productos",
+        "observed_in": "Criterio AC-CART-04 de la HU 1 — sección: Gestión del carrito de compras en SauceDemo"
+      },
+      "automation_notes": "Selectores: [data-test^='add-to-cart-'], .shopping_cart_badge. Validar ausencia de evento de navegación (page.waitForNavigation no debe dispararse). Framework: Playwright + TypeScript (Page Object Model)"
+    },
+    {
+      "id": "TC-008",
+      "type": "web",
+      "title": "Verificar actualización inmediata del contador del carrito al eliminar productos",
+      "description": "Valida que el contador del carrito en el encabezado se actualiza de forma inmediata y sin recargar la página ante cada eliminación de producto, tanto desde el inventario como desde el carrito.",
+      "objective": "Confirmar que el badge del carrito decrementa correctamente tras cada eliminación, sin necesidad de recargar",
+      "priority": "alta",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce válido para autenticación en https://www.saucedemo.com/",
+        "El carrito contiene 2 productos (Sauce Labs Backpack y Sauce Labs Bike Light) antes de ejecutar las eliminaciones"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username 'standard_user' y Password 'secret_sauce', clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' de Sauce Labs Backpack y Sauce Labs Bike Light", "data": "Selectores: [data-test='add-to-cart-sauce-labs-backpack'], [data-test='add-to-cart-sauce-labs-bike-light']", "expected_result": "El .shopping_cart_badge muestra '2'" },
+        { "order": 4, "action": "Hacer clic en el botón 'Remove' del producto Sauce Labs Backpack desde la página de inventario, sin recargar", "data": "Selector: [data-test='remove-sauce-labs-backpack']", "expected_result": "El .shopping_cart_badge se actualiza inmediatamente a '1', sin recarga de página" },
+        { "order": 5, "action": "Hacer clic en el ícono del carrito", "data": "Selector: .shopping_cart_link", "expected_result": "El sistema navega a /cart.html mostrando 1 ítem (Sauce Labs Bike Light)" },
+        { "order": 6, "action": "Hacer clic en el botón 'Remove' del producto Sauce Labs Bike Light desde /cart.html, sin recargar", "data": "Selector: [data-test='remove-sauce-labs-bike-light']", "expected_result": "El .shopping_cart_badge desaparece del encabezado (0 productos), sin recarga de página" }
+      ],
+      "post_condition": "El carrito queda vacío",
+      "acceptance_criteria_covered": ["AC-CART-04"],
+      "derivation_trace": {
+        "quote": "El contador del carrito debe actualizarse de forma inmediata y sin necesidad de recargar la página, ante cada adición o eliminación de productos",
+        "observed_in": "Criterio AC-CART-04 de la HU 1 — sección: Gestión del carrito de compras en SauceDemo"
+      },
+      "automation_notes": "Selectores: [data-test^='remove-'], .shopping_cart_badge, .shopping_cart_link. Framework: Playwright + TypeScript (Page Object Model)"
+    },
+    {
+      "id": "TC-009",
+      "type": "web",
+      "title": "Regresar al inventario desde el carrito mediante 'Continue Shopping' sin perder los productos agregados",
+      "description": "Valida que el botón 'Continue Shopping' de la página del carrito navega de regreso al inventario y que los productos previamente agregados se mantienen en el carrito.",
+      "objective": "Confirmar que la navegación de regreso al inventario no elimina los productos ya agregados al carrito",
+      "priority": "alta",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce válido para autenticación en https://www.saucedemo.com/",
+        "El carrito contiene 1 producto (Sauce Labs Backpack) antes de navegar al carrito"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username 'standard_user' y Password 'secret_sauce', clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Hacer clic en 'Add to cart' del producto Sauce Labs Backpack", "data": "Selector: [data-test='add-to-cart-sauce-labs-backpack']", "expected_result": "El contador del carrito muestra '1'" },
+        { "order": 4, "action": "Hacer clic en el ícono del carrito", "data": "Selector: .shopping_cart_link", "expected_result": "El sistema navega a /cart.html mostrando 1 ítem" },
+        { "order": 5, "action": "Hacer clic en el botón 'Continue Shopping'", "data": "Selector: [data-test='continue-shopping']", "expected_result": "El sistema navega de regreso a /inventory.html" },
+        { "order": 6, "action": "Verificar el contador del carrito y el estado de los botones 'Add to cart' / 'Remove' en el inventario", "data": "Selectores: .shopping_cart_badge, [data-test='remove-sauce-labs-backpack']", "expected_result": "El .shopping_cart_badge sigue mostrando '1' y el botón del producto Sauce Labs Backpack muestra 'Remove', confirmando que el producto no se perdió" }
+      ],
+      "post_condition": "El carrito conserva el producto agregado y el usuario se encuentra en /inventory.html",
+      "acceptance_criteria_covered": ["AC-CART-05"],
+      "derivation_trace": {
+        "quote": "El usuario debe poder regresar al inventario desde el carrito mediante la opción 'Continue Shopping'",
+        "observed_in": "Criterio AC-CART-05 de la HU 1 — sección: Gestión del carrito de compras en SauceDemo"
+      },
+      "automation_notes": "Selector: [data-test='continue-shopping']. URL esperada tras el clic: /inventory.html. Framework: Playwright + TypeScript (Page Object Model)"
+    },
+    {
+      "id": "TC-010",
+      "type": "web",
+      "title": "Verificar que el precio y cantidad del producto en el carrito persisten y coinciden con el inventario tras recargar la página",
+      "description": "Valida que el precio y la cantidad de un producto agregado al carrito coinciden exactamente con los valores mostrados en el inventario, y que dicho estado persiste al recargar la página del carrito.",
+      "objective": "Confirmar la persistencia y exactitud de los datos del producto en el carrito tras un refresco de página",
+      "priority": "alta",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce válido para autenticación en https://www.saucedemo.com/",
+        "El carrito de compras está vacío al iniciar el caso"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username 'standard_user' y Password 'secret_sauce', clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Registrar el precio mostrado en el inventario para Sauce Labs Backpack", "data": "Selector: .inventory_item_price", "expected_result": "El precio mostrado es '$29.99'" },
+        { "order": 4, "action": "Hacer clic en 'Add to cart' del producto Sauce Labs Backpack", "data": "Selector: [data-test='add-to-cart-sauce-labs-backpack']", "expected_result": "El contador del carrito muestra '1'" },
+        { "order": 5, "action": "Hacer clic en el ícono del carrito", "data": "Selector: .shopping_cart_link", "expected_result": "El sistema navega a /cart.html mostrando el ítem con precio '$29.99' y cantidad '1'" },
+        { "order": 6, "action": "Recargar la página del carrito (F5 / page.reload)", "data": "N/A", "expected_result": "La página /cart.html se recarga y el ítem persiste sin cambios" },
+        { "order": 7, "action": "Verificar nuevamente el nombre, precio y cantidad del ítem tras la recarga", "data": "Selectores: .inventory_item_name, .inventory_item_price, .cart_quantity", "expected_result": "Se muestra 'Sauce Labs Backpack', precio '$29.99' y cantidad '1', exactamente igual a los valores del inventario registrados en el paso 3" }
+      ],
+      "post_condition": "El carrito conserva el producto con precio y cantidad correctos tras la recarga",
+      "acceptance_criteria_covered": ["AC-CART-06"],
+      "derivation_trace": {
+        "quote": "El precio y la cantidad de cada producto en el carrito deben coincidir exactamente con los valores del inventario",
+        "observed_in": "Criterio AC-CART-06 de la HU 1 — sección: Gestión del carrito de compras en SauceDemo"
+      },
+      "automation_notes": "Selectores: .inventory_item_price (inventario), .inventory_item_name, .inventory_item_price, .cart_quantity (carrito). Precio de referencia validado en exploración en vivo: $29.99. Framework: Playwright + TypeScript (Page Object Model)"
+    },
+    {
+      "id": "TC-011",
+      "type": "web",
+      "title": "Verificar que el contador del carrito no se muestra cuando el carrito está vacío (caso límite)",
+      "description": "Valida el caso límite de valor cero: cuando el carrito no contiene productos, el badge del contador no debe mostrarse en el encabezado.",
+      "objective": "Confirmar que el .shopping_cart_badge está ausente cuando la cantidad de productos en el carrito es 0",
+      "priority": "baja",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce válido para autenticación en https://www.saucedemo.com/",
+        "El carrito de compras está vacío al iniciar el caso"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username 'standard_user' y Password 'secret_sauce', clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Verificar la presencia del badge del carrito en el encabezado sin haber agregado productos", "data": "Selector: .shopping_cart_badge", "expected_result": "El elemento .shopping_cart_badge no está presente / no es visible en el encabezado" },
+        { "order": 4, "action": "Hacer clic en el ícono del carrito", "data": "Selector: .shopping_cart_link", "expected_result": "El sistema navega a /cart.html mostrando la lista de ítems vacía (0 .cart_item)" }
+      ],
+      "post_condition": "El carrito permanece vacío",
+      "acceptance_criteria_covered": ["AC-CART-04"],
+      "derivation_trace": {
+        "quote": "El contador del carrito debe actualizarse de forma inmediata y sin necesidad de recargar la página, ante cada adición o eliminación de productos",
+        "observed_in": "Criterio AC-CART-04 de la HU 1 — sección: Gestión del carrito de compras en SauceDemo"
+      },
+      "automation_notes": "Selectores: .shopping_cart_badge (verificar ausencia con expect(...).not.toBeVisible()), .cart_item. Framework: Playwright + TypeScript (Page Object Model)"
+    },
+    {
+      "id": "TC-012",
+      "type": "web",
+      "title": "Verificar consistencia del contador del carrito tras una secuencia de adiciones y eliminaciones",
+      "description": "Valida que el contador del carrito refleja correctamente el conteo neto de productos tras una secuencia combinada de adiciones y eliminaciones sobre múltiples productos.",
+      "objective": "Confirmar que el badge del carrito mantiene el conteo correcto en un escenario de múltiples operaciones consecutivas",
+      "priority": "media",
+      "role": "standard",
+      "preconditions": [
+        "Usuario standard_user / secret_sauce válido para autenticación en https://www.saucedemo.com/",
+        "El carrito de compras está vacío al iniciar el caso"
+      ],
+      "steps": [
+        { "order": 1, "action": "Navegar a https://www.saucedemo.com/", "data": "N/A", "expected_result": "Se muestra la página de login" },
+        { "order": 2, "action": "Completar Username 'standard_user' y Password 'secret_sauce', clic en Login", "data": "username: standard_user, password: secret_sauce", "expected_result": "El sistema navega a /inventory.html" },
+        { "order": 3, "action": "Agregar Sauce Labs Backpack, Sauce Labs Bike Light y Sauce Labs Bolt T-Shirt", "data": "Selectores: [data-test='add-to-cart-sauce-labs-backpack'], [data-test='add-to-cart-sauce-labs-bike-light'], [data-test='add-to-cart-sauce-labs-bolt-t-shirt']", "expected_result": "El .shopping_cart_badge muestra '3'" },
+        { "order": 4, "action": "Eliminar Sauce Labs Bike Light desde el inventario", "data": "Selector: [data-test='remove-sauce-labs-bike-light']", "expected_result": "El .shopping_cart_badge se actualiza a '2'" },
+        { "order": 5, "action": "Agregar Sauce Labs Fleece Jacket", "data": "Selector: [data-test='add-to-cart-sauce-labs-fleece-jacket']", "expected_result": "El .shopping_cart_badge se actualiza a '3'" },
+        { "order": 6, "action": "Hacer clic en el ícono del carrito y verificar los ítems finales", "data": "Selector: .shopping_cart_link, .cart_item, .inventory_item_name", "expected_result": "Se muestran exactamente 3 ítems en /cart.html: 'Sauce Labs Backpack', 'Sauce Labs Bolt T-Shirt' y 'Sauce Labs Fleece Jacket', coincidiendo con el valor final del contador" }
+      ],
+      "post_condition": "El carrito contiene 3 productos: Sauce Labs Backpack, Sauce Labs Bolt T-Shirt y Sauce Labs Fleece Jacket",
+      "acceptance_criteria_covered": ["AC-CART-04"],
+      "derivation_trace": {
+        "quote": "El contador del carrito debe actualizarse de forma inmediata y sin necesidad de recargar la página, ante cada adición o eliminación de productos",
+        "observed_in": "Criterio AC-CART-04 de la HU 1 — sección: Gestión del carrito de compras en SauceDemo"
+      },
+      "automation_notes": "Selectores: [data-test^='add-to-cart-'], [data-test^='remove-'], .shopping_cart_badge, .cart_item, .inventory_item_name. Framework: Playwright + TypeScript (Page Object Model)"
+    }
+  ]
+}
