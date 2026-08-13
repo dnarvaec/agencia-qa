@@ -54,15 +54,15 @@ tools:
 
 ### ⚡ Patrones conocidos — Soluciones rápidas (no re-explorar lo ya descubierto)
 
-| Si ves esto...                                                      | Solución inmediata                                                                                                                                                                |
-| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `locked_out_user` no llega al inventario                            | Comportamiento esperado — el login devuelve error. Usar `expectLoginError('Sorry, this user has been locked out')`, NO `expectLoginSuccess()`                                    |
-| `performance_glitch_user` timeout en navegación                     | Usuario con latencia simulada → añadir `test.setTimeout(60000)` al spec y `timeout: 60000` en el fixture de autenticación                                                        |
-| Credenciales en fixture                                             | Leer desde `env.defaultUser` / `env.defaultPassword` (definidos en `automatizacion web/src/utils/env.ts`, cargados desde `.env`)                                                 |
-| El botón de carrito muestra texto "Remove" en lugar de "Add to cart"| Estado de carrito sucio entre tests — llamar `header.resetAppState()` en `afterEach` o aislar con fixture `authenticatedInventoryPage`                                           |
-| Fallo oscuro sin causa clara                                        | Revisar `automatizacion web/test-results/` y el reporte HTML en `automatizacion web/reports/` PRIMERO                                                                            |
-| Selector de precio falla con `$`                                    | SauceDemo usa `.inventory_item_price` con texto `$XX.XX` — parsear con `parseFloat(text.replace('$', ''))`                                                                       |
-| Nuevo page object no resuelve el alias `@pages/`                    | Verificar que el archivo existe en `automatizacion web/src/pages/` y que el path alias está declarado en `automatizacion web/tsconfig.json`                                      |
+| Si ves esto...                                                       | Solución inmediata                                                                                                                            |
+| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `locked_out_user` no llega al inventario                             | Comportamiento esperado — el login devuelve error. Usar `expectLoginError('Sorry, this user has been locked out')`, NO `expectLoginSuccess()` |
+| `performance_glitch_user` timeout en navegación                      | Usuario con latencia simulada → añadir `test.setTimeout(60000)` al spec y `timeout: 60000` en el fixture de autenticación                     |
+| Credenciales en fixture                                              | Leer desde `env.defaultUser` / `env.defaultPassword` (definidos en `automatizacion web/src/utils/env.ts`, cargados desde `.env`)              |
+| El botón de carrito muestra texto "Remove" en lugar de "Add to cart" | Estado de carrito sucio entre tests — llamar `header.resetAppState()` en `afterEach` o aislar con fixture `authenticatedInventoryPage`        |
+| Fallo oscuro sin causa clara                                         | Revisar `automatizacion web/test-results/` y el reporte HTML en `automatizacion web/reports/` PRIMERO                                         |
+| Selector de precio falla con `$`                                     | SauceDemo usa `.inventory_item_price` con texto `$XX.XX` — parsear con `parseFloat(text.replace('$', ''))`                                    |
+| Nuevo page object no resuelve el alias `@pages/`                     | Verificar que el archivo existe en `automatizacion web/src/pages/` y que el path alias está declarado en `automatizacion web/tsconfig.json`   |
 
 ---
 
