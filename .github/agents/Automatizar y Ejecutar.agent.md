@@ -45,23 +45,29 @@ tools:
 
 - Casos de prueba a automatizar: `archivos/Casos de Prueba/{CP_ID}/{CP_ID}-test-cases.json`
 - Automatización web UI: `automatizacion web/` — tests en `automatizacion web/tests/{feature}/`, page objects en `automatizacion web/src/pages/`
+- Automatización API: `automatizacion api/` — tests en `automatizacion api/tests/{recurso}/`, api objects en `automatizacion api/src/apis/`
 - Documentación de exploración: `automatizacion web/exploration_docs/{CP_ID}/`
 - Buscar SIEMPRE en estos directorios primero. NUNCA crear código fuera de ellos salvo indicación explícita del usuario.
+
+> ⚠️ **BOOTSTRAP obligatorio**: Lee `.github/context/contexto.md` al inicio de cada ejecución para obtener la URL de la aplicación, las credenciales de prueba, los módulos y los patrones de comportamiento conocidos del cliente actual. Usa esos valores — no hardcodees URLs, usuarios ni contraseñas.
 
 **Protocolo de fallos**: Ejecutar → Corregir → Reejecutar (máx. 5 veces) → Si te estancas: DETENTE y reporta el bloqueador al usuario
 
 ---
 
-### ⚡ Patrones conocidos — Soluciones rápidas (no re-explorar lo ya descubierto)
+### ⚡ Patrones conocidos — Soluciones rápidas
+
+> Lee la sección **"Comportamientos Conocidos de la Aplicación"** y **"Patrones conocidos"** de `.github/context/contexto.md` para obtener la lista completa de patrones, comportamientos por tipo de usuario y selectores estables del cliente actual.
+> Los patrones documentados a continuación son generales; los valores específicos del cliente viven en `contexto.md`.
 
 | Si ves esto...                                                       | Solución inmediata                                                                                                                            |
 | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| `locked_out_user` no llega al inventario                             | Comportamiento esperado — el login devuelve error. Usar `expectLoginError('Sorry, this user has been locked out')`, NO `expectLoginSuccess()` |
-| `performance_glitch_user` timeout en navegación                      | Usuario con latencia simulada → añadir `test.setTimeout(60000)` al spec y `timeout: 60000` en el fixture de autenticación                     |
+| Usuario bloqueado no llega al inventario                             | Comportamiento esperado — el login devuelve error. Usar `expectLoginError('<mensaje del contexto>')`, NO `expectLoginSuccess()`               |
+| Usuario de rendimiento con timeout en navegación                      | Usuario con latencia simulada → añadir `test.setTimeout(60000)` al spec y `timeout: 60000` en el fixture de autenticación                     |
 | Credenciales en fixture                                              | Leer desde `env.defaultUser` / `env.defaultPassword` (definidos en `automatizacion web/src/utils/env.ts`, cargados desde `.env`)              |
-| El botón de carrito muestra texto "Remove" en lugar de "Add to cart" | Estado de carrito sucio entre tests — llamar `header.resetAppState()` en `afterEach` o aislar con fixture `authenticatedInventoryPage`        |
+| Estado de carrito sucio entre tests                                  | Llamar método de reset de estado en `afterEach` o aislar con fixture de página autenticada                                                    |
 | Fallo oscuro sin causa clara                                         | Revisar `automatizacion web/test-results/` y el reporte HTML en `automatizacion web/reports/` PRIMERO                                         |
-| Selector de precio falla con `$`                                     | SauceDemo usa `.inventory_item_price` con texto `$XX.XX` — parsear con `parseFloat(text.replace('$', ''))`                                    |
+| Selector de precio falla con símbolo de moneda                      | Parsear el texto eliminando el símbolo antes de convertir a número (ej. `parseFloat(text.replace('$', ''))`)                                 |
 | Nuevo page object no resuelve el alias `@pages/`                     | Verificar que el archivo existe en `automatizacion web/src/pages/` y que el path alias está declarado en `automatizacion web/tsconfig.json`   |
 
 ---
@@ -205,22 +211,19 @@ Esta fase DEBE ejecutarse siempre primero.
 
 1. Inspeccionar la estructura del espacio de trabajo (`list_dir`)
 2. **Identificar proyectos de automatización existentes — comienza escaneando los directorios conocidos**:
-   - Automatización web: `automatizacion web/tests/` (tests organizados por feature: `login/`, `inventory/`, `cart/`, `checkout/`)
-   - Page objects: `automatizacion web/src/pages/`
-   - Fixtures: `automatizacion web/src/fixtures/pages.fixture.ts`
-   - Datos: `automatizacion web/data/` (JSONs data-driven)
-   - Exploración previa: `automatizacion web/exploration_docs/{CP_ID}/`
+   - Automatización web: `automatizacion web/`
+   - Automatización API: `automatizacion api/`
 3. Detectar:
    - Lenguaje (TypeScript)
    - Sistema de construcción (npm)
    - Framework de pruebas (Playwright)
-   - Patrón de diseño (Page Object Model + fixtures data-driven)
+   - Patrón de diseño (Page Object Model + fixtures data-driven); API Object Pattern
 4. Localizar:
    - Archivos de prueba existentes (`.spec.ts`)
    - Page objects y sus métodos disponibles
-   - Fixtures y la sesión autenticada (`authenticatedInventoryPage`)
-   - Configuración de entorno (`automatizacion web/playwright.config.ts`)
-   - Reportes existentes (`automatizacion web/reports/`)
+   - Fixtures y la sesión autenticada
+   - Configuración de entorno
+   - Reportes existentes
 5. Comparar los casos de prueba del JSON (`archivos/Casos de Prueba/{CP_ID}/{CP_ID}-test-cases.json`) con la cobertura existente en los specs
 
 ### Resultados
@@ -400,8 +403,9 @@ Todo el código de prueba generado DEBE cumplir con estos estándares:
 Todas las pruebas generadas DEBEN:
 
 - Capturar pantallas en caso de fallo y de éxito — ya está habilitado globalmente en `playwright.config.ts` con `screenshot: 'on'` y `video: 'on'`
-- Generar el reporte HTML en `automatizacion web/reports/` (configurado en `playwright.config.ts`)
+- Generar el reporte HTML (ya configurado en `playwright.config.ts`)
 - Las capturas de pantalla quedan incrustadas automáticamente en el reporte HTML de Playwright
+- Para API siempre deben contener el request y response completos para auditorias
 
 ### Flujo de trabajo de creación de código (OBLIGATORIO)
 
@@ -410,7 +414,7 @@ Cuando se solicite CUALQUIER creación de código:
 1. **Fase 1: Exploración en vivo** → Seguir la sección 8 en su totalidad
 2. **Fase 2: Selección del stack tecnológico**
    - Solicite al usuario el lenguaje objetivo y las herramientas de automatización
-   - Si no hay respuesta, use por defecto Page Object Model + TypeScript + Playwright + Playwright BDD + playwright reporting
+   - Si no hay respuesta, use por defecto Page Object Model + TypeScript + Playwright + playwright reporting para web y API Object Pattern con typescript y playwright para APIS.
    - Cierre la sesión del navegador de exploración
 3. **Fase 3: Generación de código** (ÚNICAMENTE después de las fases 1 y 2)
    - USE los datos documentados de `exploration_docs` como la ÚNICA FUENTE DE VERDAD
@@ -425,16 +429,81 @@ Cuando se solicite CUALQUIER creación de código:
 
 ---
 
-## 12. Inicialización del proyecto (Solo si no existe ninguno)
+## 12. Convenciones del proyecto por tipo de automatización
 
-1. El tipo de automatización es siempre **Web UI** — el proyecto vive en `automatizacion web/`
-2. Stack fijo del proyecto: Page Object Model + TypeScript + Playwright + playwright reporting
-3. Al añadir cobertura nueva, seguir las convenciones existentes:
-   - Nuevo page object → `automatizacion web/src/pages/{NombrePage}.ts` extendiendo `BasePage`
-   - Nuevo spec → `automatizacion web/tests/{feature}/{feature}.spec.ts`
-   - Nuevos datos de prueba → `automatizacion web/data/{nombre}.json` y cargados con `DataLoader`
-   - Registrar el page object en `automatizacion web/src/fixtures/pages.fixture.ts`
-4. El navegador DEBE ejecutarse en modo visible (headed) durante el desarrollo
+### Web UI — `automatizacion web/`
+
+Stack: **Page Object Model + TypeScript + Playwright**
+
+- Nuevo page object → `automatizacion web/src/pages/{NombrePage}.ts` extendiendo `BasePage`
+- Nuevo spec → `automatizacion web/tests/{feature}/{feature}.spec.ts`
+- Nuevos datos de prueba → `automatizacion web/data/{nombre}.json` cargados con `DataLoader`
+- Registrar el page object en `automatizacion web/src/fixtures/pages.fixture.ts`
+- El navegador DEBE ejecutarse en modo visible (headed) durante el desarrollo
+
+### API — `automatizacion api/`
+
+Stack: **API Object Pattern + TypeScript + Playwright APIRequestContext**
+
+- Nuevo api object → `automatizacion api/src/apis/{NombreApi}.ts` extendiendo `BaseApi`
+- Nuevo spec → `automatizacion api/tests/{recurso}/{recurso}.spec.ts`
+- Nuevos datos de prueba → `automatizacion api/data/{nombre}.json` cargados con `DataLoader`
+- Importar fixtures desde `automatizacion api/src/fixtures/api.fixture.ts`
+- Usar `ResponseValidator` de `@utils/ResponseValidator` para validaciones de status y body
+- Nunca hardcodear la URL base ni el token — vienen de `env.ts` que lee el `.env`
+- Aliases de path disponibles: `@apis/*`, `@fixtures/*`, `@utils/*`, `@schemas/*`, `@data/*`
+
+**Estructura de un API Object:**
+
+```typescript
+import { APIRequestContext, APIResponse } from '@playwright/test';
+import { BaseApi } from '@apis/BaseApi';
+
+export class ProductApi extends BaseApi {
+  constructor(request: APIRequestContext, baseURL: string) {
+    super(request, baseURL);
+  }
+
+  async getAll(): Promise<APIResponse> {
+    return this.get('/products');
+  }
+
+  async getById(id: number): Promise<APIResponse> {
+    return this.get(`/products/${id}`);
+  }
+
+  async create(payload: unknown): Promise<APIResponse> {
+    return this.post('/products', payload);
+  }
+
+  async update(id: number, payload: unknown): Promise<APIResponse> {
+    return this.put(`/products/${id}`, payload);
+  }
+
+  async remove(id: number): Promise<APIResponse> {
+    return this.delete(`/products/${id}`);
+  }
+}
+```
+
+**Estructura de un spec API:**
+
+```typescript
+import { test, expect } from '@fixtures/api.fixture';
+import { ProductApi } from '@apis/ProductApi';
+import { ResponseValidator } from '@utils/ResponseValidator';
+import { DataLoader } from '@utils/DataLoader';
+import { env } from '@utils/env';
+
+test.describe('ProductApi — CRUD', () => {
+  test('GET /products devuelve lista con HTTP 200', async ({ apiContext }) => {
+    const api = new ProductApi(apiContext, env.apiUrl);
+    const response = await api.getAll();
+    const body = await ResponseValidator.expectOk(response);
+    expect(Array.isArray(body)).toBeTruthy();
+  });
+});
+```
 
 ---
 

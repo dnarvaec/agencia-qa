@@ -12,7 +12,11 @@
     "test:web:inventory": "playwright test --config \"automatizacion web/playwright.config.ts\" tests/inventory/",
     "test:web:cart": "playwright test --config \"automatizacion web/playwright.config.ts\" tests/cart/",
     "test:web:checkout": "playwright test --config \"automatizacion web/playwright.config.ts\" tests/checkout/",
-    "codegen": "playwright codegen"
+    "codegen": "playwright codegen",
+    "test:api": "playwright test --config \"automatizacion api/playwright.config.ts\"",
+    "test:api:ui": "playwright test --config \"automatizacion api/playwright.config.ts\" --ui",
+    "test:api:debug": "playwright test --config \"automatizacion api/playwright.config.ts\" --debug",
+    "test:api:report": "playwright show-report \"automatizacion api/reports\""
   },
   "dependencies": {
     "dotenv": "^16.6.1",
