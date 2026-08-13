@@ -3,8 +3,6 @@ node_modules/
 
 # Variables de entorno (contienen credenciales/secretos)
 .env
-.env.*
-!.env.example
 
 # Playwright: resultados, reportes HTML y trazas
 test-results/
