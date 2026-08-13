@@ -10,7 +10,8 @@ const SKILLS_DIR = path.join(__dirname, '../../.github/skills');
  * Extrae el bloque YAML frontmatter y el contenido Markdown de un .agent.md
  */
 function parseFrontmatter(raw) {
-  const match = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
+  // strip UTF-8 BOM (\uFEFF) that some editors add silently
+  const match = raw.replace(/^\uFEFF/, '').match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n([\s\S]*)$/);
   if (!match) return null;
 
   const yaml     = match[1];
