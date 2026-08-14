@@ -26,3 +26,6 @@ npm-debug.log*
 # Archivos de SO/editor
 .DS_Store
 Thumbs.db
+
+# graphify-axet
+.graphify/
