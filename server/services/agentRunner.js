@@ -12,11 +12,16 @@
  */
 
 const { AzureOpenAI } = require('openai');
+const fs   = require('fs');
+const path = require('path');
 
 const { getAgent, getSkills } = require('./agentReader');
 const MCPManager = require('./mcpManager');
 const { WORKSPACE_TOOL_DEFS,
   callWorkspaceTool } = require('./workspaceTools');
+
+const WORKSPACE_ROOT = path.resolve(__dirname, '../../');
+const PROJECT_CONTEXT_FILE = path.join(WORKSPACE_ROOT, '.github/context/contexto.md');
 
 const MAX_ITERATIONS = 70;
 
@@ -53,7 +58,18 @@ const TOOL_NAME_MAP = [
   [/\bsearch\/textSearch\b/g,               'workspace__textSearch'],
   [/\bsearch\/codebase\b/g,                 'workspace__textSearch'],
   [/\bweb\/fetch\b/g,                       'workspace__fetchUrl'],
-  [/\bread\/viewImage\b/g,                  '(no disponible en este runtime)'],
+  [/\bexecute\/runInTerminal\b/g,            'workspace__executeCommand'],
+  [/\bexecute\/\w+\b/g,                      'workspace__executeCommand'],
+  // Aliases de herramientas MCP de Azure DevOps — los agentes usan nombres cortos,
+  // el MCP real puede usar nombres distintos; el LLM adapta según el tools list real.
+  [/\bazure-devops\/wit_create_work_item\b/g,           'azure-devops/wit_work_item_write'],
+  [/\bazure-devops\/wit_update_work_item\b/g,           'azure-devops/wit_work_item_write'],
+  [/\bazure-devops\/testplan_create_test_case\b/g,      'azure-devops/testplan_test_case_write'],
+  [/\bazure-devops\/testplan_update_test_case_steps\b/g,'azure-devops/testplan_test_case_write'],
+  [/\bazure-devops\/testplan_add_test_cases_to_suite\b/g,'azure-devops/testplan_test_suite_write'],
+  [/\bazure-devops\/testplan_create_test_suite\b/g,     'azure-devops/testplan_test_suite_write'],
+  [/\bazure-devops\/testplan_create_test_plan\b/g,      'azure-devops/testplan_test_plan_write'],
+  [/\bread\/viewImage\b/g,                   '(no disponible en este runtime)'],
   [/\bread\/problems\b/g,                   '(no disponible en este runtime)'],
   [/\bread\/readNotebookCellOutput\b/g,      '(no disponible en este runtime)'],
   [/\bread\/getNotebookSummary\b/g,          '(no disponible en este runtime)'],
@@ -316,6 +332,14 @@ async function runAgent({ agentName, prompt, onProgress, signal }) {
     resolvedPrompt = resolvedPrompt.replace(pattern, replacement);
   }
 
+  // ── Inyectar contexto del proyecto ────────────────────────────────────────
+  // En VS Code Copilot el runtime lee contexto.md como skill automáticamente.
+  // Aquí se inyecta explícitamente para garantizar paridad de comportamiento.
+  if (fs.existsSync(PROJECT_CONTEXT_FILE)) {
+    const contextContent = fs.readFileSync(PROJECT_CONTEXT_FILE, 'utf8');
+    resolvedPrompt = `[CONTEXTO DEL PROYECTO]\n${contextContent}\n\n` + resolvedPrompt;
+  }
+
   // ── NUEVO: Inyectar información de skills disponibles ────────────────────────
   const skills = getSkills();
   if (skills.length > 0) {
@@ -325,10 +349,15 @@ async function runAgent({ agentName, prompt, onProgress, signal }) {
     resolvedPrompt += `\n\n[SKILLS DISPONIBLES]:\nLos siguientes skills están disponibles en este workspace. Cuando necesites usarlos, llama a la herramienta \`workspace__loadSkill\` con el nombre de la skill para obtener instrucciones detalladas:\n\n${skillsList}`;
   }
 
-  // ── NUEVO: Configuración Azure DevOps obligatoria desde .env ─────────────────
+  // ── Configuración Azure DevOps ────────────────────────────────────────────
   if (yamlMcpServers.has('azure-devops')) {
     const azureOrgUrl = (process.env.AZURE_DEVOPS_ORG_URL || '').trim();
     const azureProject = (process.env.AZURE_DEVOPS_PROJECT || '').trim();
+
+    // Sustituir placeholders literales del tipo {AZURE_DEVOPS_PROJECT} en WIQL y rutas
+    if (azureProject) {
+      resolvedPrompt = resolvedPrompt.replace(/\{AZURE_DEVOPS_PROJECT\}/g, azureProject);
+    }
 
     resolvedPrompt += `\n\n[CONFIGURACIÓN OBLIGATORIA DE AZURE DEVOPS]:` +
       `\n- organization_url válida: ${azureOrgUrl || '(no definida)'}` +
@@ -338,6 +367,25 @@ async function runAgent({ agentName, prompt, onProgress, signal }) {
       `\n- Si necesitas consultar Azure DevOps y el MCP falla o no está disponible, debes reportar el error real.` +
       `\n- No uses web/fetch para consultar Azure DevOps con URLs armadas manualmente.` +
       `\n- Si en cualquier texto previo aparece otra organización, ignórala por completo y considera como verdad única la configuración actual del .env.`;
+  }
+
+  // ── Configuración de integraciones (Fabric, Power BI, servidor local) ─────
+  // Siempre se inyecta para que los agentes no necesiten leer .env directamente.
+  {
+    const agentPort   = process.env.AGENT_UI_PORT    || '3000';
+    const fabricWsId  = process.env.FABRIC_WORKSPACE_ID  || '';
+    const powerbiWsId = process.env.POWERBI_WORKSPACE_ID || '';
+    const tenantId    = process.env.AZURE_TENANT_ID      || '';
+    const clientId    = process.env.AZURE_CLIENT_ID      || '';
+
+    resolvedPrompt += `\n\n[CONFIGURACIÓN DEL ENTORNO DE EJECUCIÓN]:` +
+      `\n- Servidor Express local: http://localhost:${agentPort}` +
+      `\n- AGENT_UI_PORT: ${agentPort}` +
+      (fabricWsId  ? `\n- FABRIC_WORKSPACE_ID: ${fabricWsId}`   : '') +
+      (powerbiWsId ? `\n- POWERBI_WORKSPACE_ID: ${powerbiWsId}` : '') +
+      (tenantId    ? `\n- AZURE_TENANT_ID: ${tenantId}`         : '') +
+      (clientId    ? `\n- AZURE_CLIENT_ID: ${clientId}`         : '') +
+      `\n- No leas el archivo .env para obtener estas variables; usa los valores indicados aquí.`;
   }
 
   // ── NUEVO: Forzar autonomía absoluta ─────────────────────────────────────────
@@ -361,6 +409,7 @@ async function runAgent({ agentName, prompt, onProgress, signal }) {
   // termina con 'stop' sin haber llamado workspace__writeFile.
   let hasCalledAnyTool = false; // ¿el modelo llamó alguna tool en esta ejecución?
   let hasWrittenFiles = false; // ¿llamó workspace__writeFile al menos una vez?
+  let hasExecutedCommand = false; // ¿llamó workspace__executeCommand? → modo ejecución, save-step no aplica
   let injectedSaveStep = false; // ¿ya inyectamos el mensaje de guardado?
   let saveStepIter = 0;     // iteraciones transcurridas desde la inyección del save-step
   const writtenFilesSet = new Set(); // rutas únicas de archivos guardados durante la ejecución
@@ -460,7 +509,7 @@ async function runAgent({ agentName, prompt, onProgress, signal }) {
       if (choice.finish_reason === 'stop' || !msg.tool_calls || msg.tool_calls.length === 0) {
         // Si el agente ya hizo trabajo pero NO guardó archivos, forzar el paso de guardado.
         // Solo lo hacemos una vez (injectedSaveStep evita bucle infinito).
-        if (hasCalledAnyTool && !hasWrittenFiles && !injectedSaveStep) {
+        if (hasCalledAnyTool && !hasWrittenFiles && !injectedSaveStep && !hasExecutedCommand) {
           injectedSaveStep = true;
           onProgress({
             type: 'info',
@@ -533,6 +582,8 @@ async function runAgent({ agentName, prompt, onProgress, signal }) {
             if (toolShortName === 'writeFile') {
               hasWrittenFiles = true; // marcar guardado
               if (args.path) writtenFilesSet.add(args.path);
+            } else if (toolShortName === 'executeCommand') {
+              hasExecutedCommand = true; // modo ejecución — save-step no debe activarse
             }
             // fetchUrl devuelve una Promise; await funciona para síncronos y asíncronos
             const result = await Promise.resolve(callWorkspaceTool(toolShortName, args));
