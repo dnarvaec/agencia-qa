@@ -11,6 +11,7 @@ const fs = require('fs');
 const { getAgents } = require('./services/agentReader');
 const { runAgent } = require('./services/agentRunner');
 const { getDashboardData, parseMarkdownHU } = require('./services/dashboardService');
+const { generateBugReports } = require('./services/bugReportService');
 const MCPClient   = require('./services/mcpClient');
 const fabricClient = require('./services/fabricClient');
 const powerbiClient = require('./services/powerbiClient');
@@ -416,6 +417,23 @@ io.on('connection', (socket) => {
         signal: controller.signal, // <-- Pasamos la señal al agente
         onProgress: (event) => socket.emit('agent-progress', event),
       });
+
+      // Garantía de servidor: generar reportes de bugs si el agente los omitió.
+      // Se activa solo cuando hay spec files en los archivos escritos o cuando
+      // el agente es el de automatización (independientemente de lo que haya escrito).
+      const isAutomationAgent = /automatiz/i.test(agentName);
+      const hasSpecs = (writtenFiles || []).some(f => /\.spec\.(ts|js)$/.test(f));
+      if (isAutomationAgent || hasSpecs) {
+        try {
+          const bugFiles = generateBugReports(WORKSPACE_ROOT);
+          if (bugFiles.length > 0) {
+            socket.emit('agent-progress', { type: 'info', message: `📋 Reporte de bugs generado: ${bugFiles.map(f => f.split('/').pop()).join(', ')}` });
+          }
+        } catch (e) {
+          console.error('[BugReport] Error al generar reporte automático:', e.message);
+        }
+      }
+
       socket.emit('agent-done', { success: true, files: writtenFiles || [] });
     } catch (err) {
       // 2. Distinguir entre cancelación voluntaria y un error real
