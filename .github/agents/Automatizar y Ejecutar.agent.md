@@ -447,11 +447,55 @@ Stack: **API Object Pattern + TypeScript + Playwright APIRequestContext**
 
 - Nuevo api object → `automatizacion api/src/apis/{NombreApi}.ts` extendiendo `BaseApi`
 - Nuevo spec → `automatizacion api/tests/{recurso}/{recurso}.spec.ts`
+- El `test.describe` DEBE usar el formato `'HU-{story_id} | {descripción}'` para que el dashboard pueda atribuir los resultados de ejecución a la HU correcta. Ejemplo: `test.describe('HU-25062 | POST /api/sap/logisticsCenter', () => {`
 - Nuevos datos de prueba → `automatizacion api/data/{nombre}.json` cargados con `DataLoader`
 - Importar fixtures desde `automatizacion api/src/fixtures/api.fixture.ts`
 - Usar `ResponseValidator` de `@utils/ResponseValidator` para validaciones de status y body
 - Nunca hardcodear la URL base ni el token — vienen de `env.ts` que lee el `.env`
 - Aliases de path disponibles: `@apis/*`, `@fixtures/*`, `@utils/*`, `@schemas/*`, `@data/*`
+
+#### Regla 1 — Datos únicos por ejecución (obligatoria para tests de creación)
+
+Antes de generar código, leer en `contexto.md` la columna **Máx. chars** del campo identificador del recurso. El código único debe tener EXACTAMENTE ese número de caracteres; ni uno más.
+
+```typescript
+// maxLen = límite leído de contexto.md para el campo identificador del recurso
+// Ej.: logisticCenter → 4 chars
+function uniqueId(maxLen: number): string {
+  return Date.now().toString(36).slice(-maxLen).toUpperCase();
+}
+function uniquePayload(base: SomeRequest): SomeRequest {
+  const id = uniqueId(4); // ajustar maxLen según el recurso
+  return { ...base, logisticCenter: id, edscod: `EDS${id}` };
+}
+```
+
+> Si no aparece el límite en `contexto.md`, consultar el schema en `src/schemas/{recurso}.ts` y luego probar con un valor de ejemplo de la colección Postman para inferirlo.
+
+#### Regla 2 — Cubrir el 100% de los casos API del JSON (sin omitir ninguno)
+
+Al leer `archivos/Casos de Prueba/{ID}/{ID}-test-cases.json`, verificar `summary.total_api`. Generar exactamente ese número de tests API, sin excepción. Para casos que no se pueden automatizar completamente:
+
+- **Caso con verificación externa** (ej. datalake MDM): automatizar la parte que sí es testable (la creación HTTP 200) y agregar `test.info().annotations.push({ type: 'pending_verification', description: 'La verificación del sistema externo (MDM/datalake) requiere acceso fuera del alcance de la API pública.' })`.
+- **Caso con endpoint no documentado**: usar `test.fixme('Endpoint no documentado en la colección Postman. Requiere investigación del equipo backend.')` — el test queda como pendiente sin bloquear la suite.
+
+```typescript
+// Caso con verificación parcial en sistema externo
+test('TC-XXX: Cola MDM creada tras integración EDS', async ({ logisticsCenterApi }) => {
+  test.info().annotations.push({
+    type: 'pending_verification',
+    description: 'La creación HTTP 200 es evidencia indirecta del MDM. Verificación directa del datalake requiere acceso externo.'
+  });
+  const response = await logisticsCenterApi.create(uniquePayload(data.valid));
+  await ResponseValidator.expectOk(response); // valida la creación exitosa
+});
+
+// Caso con endpoint desconocido
+test.fixme('TC-XXX: Creación manual de EDS afiliada (no SAP)', () => {
+  // Endpoint para EDS afiliadas no está en la colección Postman oficial.
+  // Requiere documentación del equipo backend para implementar.
+});
+```
 
 **Estructura de un API Object:**
 
@@ -577,6 +621,100 @@ Proveer al usuario:
 - Capturar el contexto completo del error: traza de la pila (stack trace), captura de pantalla, HTML de la página, logs de consola
 - Guardar en una carpeta de errores con marca de tiempo para su análisis
 - Incluir los pasos de reproducción en el reporte del error
+
+---
+
+## 16. Reporte automático de bugs (system_bug)
+
+Cuando al finalizar la ejecución existan tests clasificados como `system_bug`, el agente DEBE generar automáticamente los archivos de seguimiento **antes** de entregar el reporte final. Este paso es **obligatorio** — no es opcional y no requiere confirmación del usuario.
+
+### 16.1 Cuándo se activa
+
+- Al menos un test terminó con `error_type: "system_bug"` (el problema es del backend/aplicación, no del código de prueba).
+- Aplica tanto a suites **API** como **Web**.
+
+### 16.2 Carpeta de destino
+
+```
+archivos/Seguimiento/{STORY_ID}/
+```
+
+Donde `{STORY_ID}` es el ID de la Historia de Usuario que se está automatizando (ej. `25062`).
+
+Crear la carpeta si no existe: `workspace__createDirectory`.
+
+### 16.3 Archivos a generar (AMBOS obligatorios)
+
+#### `{STORY_ID}-qa-results.json` — formato del scanner del dashboard
+
+```json
+{
+  "story_id": "{STORY_ID}",
+  "story_title": "{título de la HU}",
+  "generated_at": "{ISO timestamp del momento de ejecución}",
+  "execution_date": "{YYYY-MM-DD}",
+  "environment": "{QAS | PRD | DEV}",
+  "api_host": "{URL base del API o APP}",
+  "total_tests": <número total>,
+  "passed": <pasados>,
+  "failed": <fallidos>,
+  "results": [
+    {
+      "id": "BUG-{STORY_ID}-{NNN}",
+      "title": "{descripción corta del bug}",
+      "test_case": "{TC_ID}",
+      "status": "FAIL",
+      "error_type": "system_bug",
+      "priority": "Alta",
+      "subtype": "API",
+      "endpoint": "{método y path del endpoint afectado}",
+      "error": "{descripción del error observado}",
+      "expected": "{comportamiento esperado según la HU}",
+      "actual": "{comportamiento real observado}",
+      "reproduction_steps": [
+        "{paso 1}",
+        "{paso 2}"
+      ],
+      "recommendation": "{recomendación al equipo de backend}"
+    }
+  ]
+}
+```
+
+> Solo incluir en `results[]` los items con `status: "FAIL"` y `error_type: "system_bug"`. Tests pasados NO se incluyen en este archivo.
+
+#### `{STORY_ID}-qa-results.md` — reporte humano descargable
+
+Formato libre en Markdown. DEBE incluir por cada bug:
+- Encabezado `## BUG-{STORY_ID}-{NNN} — {título}`
+- Tabla resumen (ID, Test Case, Prioridad, Módulo, Estado, Endpoint)
+- **Descripción** del fallo
+- **Resultado esperado** (con bloque de código del body esperado)
+- **Resultado actual** (con bloque de código del body real)
+- **Pasos para reproducir** (numerados, con URLs reales)
+- **Recomendación** al equipo de backend
+
+Finalizar con pie de página:
+```
+*Reporte generado automáticamente por el agente "Automatizar y Ejecutar" — Suite HU {STORY_ID} ejecutada el {fecha}.*
+```
+
+### 16.4 Flujo de escritura
+
+```
+1. workspace__createDirectory("archivos/Seguimiento/{STORY_ID}")
+2. workspace__writeFile("archivos/Seguimiento/{STORY_ID}/{STORY_ID}-qa-results.json", <JSON>)
+3. workspace__writeFile("archivos/Seguimiento/{STORY_ID}/{STORY_ID}-qa-results.md", <Markdown>)
+```
+
+Los tres pasos son **secuenciales** y obligatorios. Solo después de completarlos el agente puede emitir el reporte de entrega final.
+
+### 16.5 Integración con el dashboard
+
+Los archivos generados son detectados automáticamente por el servidor:
+- El JSON es escaneado por `dashboardService.js` al cargar el dashboard → los bugs aparecen en la tabla "Bugs y Defectos Detectados".
+- El MD es el archivo descargable que aparece en el botón "↓ Descargar" de cada fila de bug.
+- **No se requiere ninguna acción adicional** — el servidor los detecta solo.
 
 ---
 

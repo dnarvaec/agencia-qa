@@ -469,14 +469,16 @@ function renderSelectedHuMetrics(huId) {
   // 4. Tabla de Bugs
   dashBugsTableBody.innerHTML = '';
   if (!hu.bugs || hu.bugs.length === 0) {
-    dashBugsTableBody.innerHTML = '<tr><td colspan="6" class="table-empty">No se han registrado bugs para esta HU.</td></tr>';
+    dashBugsTableBody.innerHTML = '<tr><td colspan="7" class="table-empty">No se han registrado bugs para esta HU.</td></tr>';
   } else {
     hu.bugs.forEach(bug => {
       const tr = document.createElement('tr');
       const prio = (bug.prioridad || 'Medio').toLowerCase();
       const priorityClass = `priority-pill--${prio}`;
       const dateStr = bug.fecha ? new Date(bug.fecha).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
-      
+      const downloadCell = bug.reportPath
+        ? `<td><a class="btn btn--secondary" style="padding:4px 10px;font-size:11px;" href="/api/download?path=${encodeURIComponent(bug.reportPath)}" download>↓ Descargar</a></td>`
+        : '<td>—</td>';
       tr.innerHTML = `
         <td><strong>${escHtml(bug.id)}</strong></td>
         <td>${escHtml(bug.modulo)}</td>
@@ -484,6 +486,7 @@ function renderSelectedHuMetrics(huId) {
         <td><span class="priority-pill ${priorityClass}">${escHtml(bug.prioridad)}</span></td>
         <td>${escHtml(bug.estado)}</td>
         <td>${escHtml(dateStr)}</td>
+        ${downloadCell}
       `;
       dashBugsTableBody.appendChild(tr);
     });

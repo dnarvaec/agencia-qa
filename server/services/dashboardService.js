@@ -166,6 +166,12 @@ function getDashboardData() {
               try {
                 const content = fs.readFileSync(path.join(rptPath, f), 'utf8');
                 const parsed = JSON.parse(content);
+                // Ruta relativa al .md para descarga (misma carpeta, misma base)
+                const mdFile = f.replace('-qa-results.json', '-qa-results.md');
+                const mdAbs  = path.join(rptPath, mdFile);
+                const reportPath = fs.existsSync(mdAbs)
+                  ? path.relative(rootDir, mdAbs).replace(/\\/g, '/')
+                  : path.relative(rootDir, path.join(rptPath, f)).replace(/\\/g, '/');
                 if (Array.isArray(parsed.results)) {
                   parsed.results.forEach(res => {
                     if (!res) return;
@@ -179,7 +185,8 @@ function getDashboardData() {
                           prioridad: res.priority || 'Alto',
                           modulo: res.subtype || 'API',
                           fecha: parsed.generated_at || '',
-                          storyId: parsed.story_id
+                          storyId: parsed.story_id,
+                          reportPath  // ruta para el enlace de descarga en el dashboard
                         });
                       }
                     }
@@ -202,17 +209,85 @@ function getDashboardData() {
   allBugs.forEach(bug => {
     let matchedHuId = bug.storyId;
     if (!matchedHuId) {
-      // Buscar en título, módulo o descripción si coincide con el ID de alguna HU
       const text = `${bug.titulo} ${bug.modulo}`.toLowerCase();
       const found = huIds.find(id => text.includes(id));
       matchedHuId = found || defaultHuId;
     }
-
     if (matchedHuId) {
       const hu = getHuObject(matchedHuId);
       if (!hu.bugs.some(b => String(b.id) === String(bug.id))) {
         hu.bugs.push(bug);
       }
+    }
+  });
+
+  // Sobrescribir statusCounts y automationCounts con datos reales de ejecución de Playwright.
+  // Los JSON de casos de prueba no tienen campos state/automation_status, por lo que el scanner
+  // base deja todo en Designed/NotAutomated. Playwright results.json es la fuente de verdad real.
+  const HU_ID_PATTERN = /\bHU[-\s#]?(\d{4,6})\b/i;
+
+  const walkSuites = (suites, callback) => {
+    for (const s of suites || []) {
+      callback(s);
+      walkSuites(s.suites, callback);
+    }
+  };
+
+  const playwrightFiles = [
+    path.join(rootDir, 'automatizacion api', 'reports', 'results.json'),
+    path.join(rootDir, 'automatizacion web', 'reports', 'results.json'),
+  ];
+
+  playwrightFiles.forEach(rFile => {
+    if (!fs.existsSync(rFile)) return;
+    try {
+      const results = JSON.parse(fs.readFileSync(rFile, 'utf8'));
+      if (!results || !results.suites) return;
+
+      const stats   = results.stats || {};
+      const passed  = stats.expected   || 0;
+      const failed  = stats.unexpected || 0;
+      const skipped = stats.skipped    || 0;
+      const totalRan = passed + failed;
+
+      // Contar todos los specs del archivo (incluyendo fixme/skip = automated pero pendiente)
+      let totalSpecs = 0;
+      walkSuites(results.suites, s => { totalSpecs += (s.specs || []).length; });
+
+      // 1. Intentar extraer HU ID del título del describe (convencion: "HU-XXXXX | ...")
+      let targetHuId = null;
+      walkSuites(results.suites, s => {
+        if (targetHuId) return;
+        const m = HU_ID_PATTERN.exec(s.title || '');
+        if (m) targetHuId = m[1];
+        for (const sp of s.specs || []) {
+          if (targetHuId) break;
+          const sm = HU_ID_PATTERN.exec(sp.title || '');
+          if (sm) targetHuId = sm[1];
+        }
+      });
+
+      // 2. Fallback: si solo hay una HU en el workspace, atribuir todos los resultados a ella
+      if (!targetHuId && Object.keys(hus).length === 1) {
+        targetHuId = Object.keys(hus)[0];
+      }
+
+      if (!targetHuId) return;
+
+      const hu = getHuObject(targetHuId);
+      const total = hu.totalCases;
+
+      // Automated = specs en el archivo; NotAutomated = diferencia con total diseñado
+      hu.automationCounts.Automated    = Math.min(totalSpecs, total);
+      hu.automationCounts.NotAutomated = Math.max(0, total - hu.automationCounts.Automated);
+
+      // Completed = pasados, Executed = fallidos, Designed = no ejecutados aún
+      hu.statusCounts.Completed = passed;
+      hu.statusCounts.Executed  = failed;
+      hu.statusCounts.Designed  = Math.max(0, total - totalRan - skipped);
+
+    } catch (e) {
+      console.error(`Error procesando resultados Playwright (${path.basename(rFile)}):`, e.message);
     }
   });
 

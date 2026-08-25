@@ -454,6 +454,11 @@ async function runAgent({ agentName, prompt, onProgress, signal }) {
   let expectedSequentialCount = null; // total esperado, inferido del primer JSON local leído con test_cases/casos_prueba/cases
   let sequentialToolCallCount = 0;    // veces que se ejecutó con éxito una tool "1-por-turno"
   let mustFixDescriptionNext = false; // ¿queda pendiente fijar Description antes de seguir?
+  // Solo habilitar el forzado secuencial si el agente usa tools que matcheen
+  // SEQUENTIAL_ONLY_TOOL_PATTERNS (ej. testplan_test_case_write para Azure DevOps).
+  // El agente "Automatizar y Ejecutar" escribe archivos con workspace__writeFile — ese
+  // mecanismo no aplica y causaba un bucle infinito de 50+ iteraciones.
+  const hasSequentialOnlyTools = tools.some((t) => isSequentialOnlyTool(t.function?.name ?? ''));
 
   try {
     for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
@@ -553,7 +558,8 @@ async function runAgent({ agentName, prompt, onProgress, signal }) {
         // Si aún faltan elementos por procesar en un flujo "1-por-turno" (ej. Test Cases
         // de Test Plan), NO permitir que el agente termine ni pregunte al usuario —
         // forzar continuación autónoma sin importar qué haya respondido en texto.
-        if (expectedSequentialCount !== null && sequentialToolCallCount < expectedSequentialCount) {
+        // Guard: solo aplica cuando el agente realmente usa tools secuenciales.
+        if (hasSequentialOnlyTools && expectedSequentialCount !== null && sequentialToolCallCount < expectedSequentialCount) {
           const remaining = expectedSequentialCount - sequentialToolCallCount;
           onProgress({
             type: 'info',
@@ -703,7 +709,8 @@ async function runAgent({ agentName, prompt, onProgress, signal }) {
             }
             // Inferir cuántos elementos hay que procesar en un flujo "1-por-turno"
             // a partir del primer JSON local leído que declare test_cases/casos_prueba/cases.
-            if (toolShortName === 'readFile' && expectedSequentialCount === null) {
+            // Solo activar si el agente tiene tools secuenciales (ej. testplan_test_case_write).
+            if (toolShortName === 'readFile' && expectedSequentialCount === null && hasSequentialOnlyTools) {
               try {
                 const parsed = JSON.parse(result);
                 const arr = parsed.test_cases || parsed.casos_prueba || parsed.cases;

@@ -15,7 +15,10 @@ export class ResponseValidator {
 
   /** Valida que la respuesta sea 2xx y parsea el body */
   static async expectOk<T = unknown>(response: APIResponse): Promise<T> {
-    expect(response.ok(), `La respuesta no fue exitosa: ${response.status()}`).toBeTruthy();
+    if (!response.ok()) {
+      const body = await response.body().catch(() => Buffer.from('(no body)'));
+      expect(response.ok(), `HTTP ${response.status()} — body: ${body.toString('utf-8')}`).toBeTruthy();
+    }
     return response.json() as Promise<T>;
   }
 
